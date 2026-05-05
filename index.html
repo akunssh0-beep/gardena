@@ -10,6 +10,7 @@
     <script src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.mjs" type="module"></script>
     
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
 
     <style>
         :root { --primary: #db2777; --accent: #6366f1; --bg: #f1f5f9; --card-bg: #ffffff; --border-color: #e2e8f0; --text-main: #0f172a; --text-mute: #64748b; }
@@ -23,7 +24,6 @@
         .view-content { display: none; flex-direction: column; width: 100%; }
         .view-content.active { display: flex; }
 
-        /* MESH GRADIENT & DECORATION */
         .pink-header { 
             background: linear-gradient(135deg, #db2777 0%, #be185d 40%, #6366f1 100%); 
             position: relative;
@@ -56,7 +56,6 @@
         .modal-card { background: var(--card-bg); width: 100%; max-width: 400px; border-radius: 28px; overflow: hidden; }
         .scanner-container { position: relative; width: 100%; aspect-ratio: 1/1; background: #000; border-radius: 20px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         
-        /* FACE GUIDE OVERLAY (.face-oval) */
         .face-guide {
             position: absolute; inset: 0; z-index: 30; border: 4px solid rgba(255,255,255,0.1); border-radius: 20px;
             display: flex; align-items: center; justify-content: center; pointer-events: none;
@@ -65,11 +64,9 @@
             width: 65%; height: 75%; border: 3px dashed rgba(255,255,255,0.5); border-radius: 50% 50% 45% 45%;
             position: relative; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        /* Visual Feedback (Warna Hijau/Merah) */
         .face-oval.valid { border-color: #10b981; border-style: solid; box-shadow: 0 0 25px rgba(16, 185, 129, 0.4); transform: scale(1.02); }
         .face-oval.invalid { border-color: #ef4444; border-style: dashed; }
 
-        /* Focus Ring Overlay */
         .scanner-overlay {
             position: absolute; inset: 0; z-index: 15; pointer-events: none;
             display: flex; align-items: center; justify-content: center;
@@ -102,7 +99,7 @@
         }
 
         .rekap-wrapper { width: 100%; overflow-x: auto; border-radius: 20px; }
-        .rekap-table { width: 100%; border-collapse: collapse; font-size: 10px; min-width: 600px; }
+        .rekap-table { width: 100%; border-collapse: collapse; font-size: 10px; min-width: 500px; }
         .rekap-table th { background: #f8fafc; padding: 12px 8px; text-align: left; border-bottom: 2px solid #e2e8f0; color: #64748b; font-weight: 800; text-transform: uppercase; white-space: nowrap; }
         .rekap-table td { padding: 12px 8px; border-bottom: 1px solid #f1f5f9; color: var(--text-main); font-weight: 600; white-space: nowrap; }
 
@@ -115,7 +112,6 @@
         .scanning-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: rgba(219, 39, 119, 0.7); box-shadow: 0 0 15px #db2777; animation: scan 2s linear infinite; z-index: 20; display: none; }
         @keyframes scan { from { top: 0; } to { top: 100%; } }
 
-        /* GPS Signal Style */
         #geo-info { background: #f8fafc; border-radius: 24px; padding: 16px; margin-top: 10px; border: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center; gap: 8px; }
         .signal-container { display: flex; align-items: flex-end; gap: 3px; height: 16px; }
         .signal-bar { width: 4px; border-radius: 1px; background: #e2e8f0; transition: 0.3s; }
@@ -167,14 +163,20 @@
                         <div class="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl border border-white/30 flex items-center justify-center text-2xl">👩‍⚕️</div>
                         <div class="relative z-10">
                             <h2 id="prof-name" class="text-lg font-black uppercase leading-tight">PETUGAS</h2>
-                            <div class="flex items-center gap-1 mt-0.5">
-                                <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
-                                <p class="text-[9px] font-bold opacity-90 tracking-wide uppercase">Penugasan Khusus PKM</p>
+                            <div class="flex flex-col gap-0.5 mt-0.5">
+                                <div class="flex items-center gap-1">
+                                    <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
+                                    <p class="text-[9px] font-bold opacity-90 tracking-wide uppercase">Penugasan Khusus PKM</p>
+                                </div>
+                                <div id="profile-gps-status" class="flex items-center gap-1.5 bg-black/20 px-2 py-0.5 rounded-full w-fit">
+                                    <span id="profile-gps-dot" class="w-1.5 h-1.5 bg-slate-400 rounded-full"></span>
+                                    <p id="profile-gps-text" class="text-[7px] font-black tracking-widest uppercase">Mendeteksi Lokasi...</p>
+                                </div>
                             </div>
                             <p id="clock-display" class="text-xl font-bold opacity-80 mt-1">00:00</p>
                         </div>
                     </div>
-                    <button onclick="logout()" class="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 flex items-center justify-center relative z-10">🚪</button>
+                    <button onclick="openLogoutModal()" class="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 flex items-center justify-center relative z-10">🚪</button>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 relative z-10">
@@ -207,14 +209,43 @@
 
         <div id="view-rekap" class="view-content">
             <div class="p-8 pt-14">
-                <h2 class="text-2xl font-black text-slate-800 uppercase tracking-tighter">Rekap Presensi</h2>
-                <p class="text-[10px] text-slate-400 font-bold uppercase mb-6">Riwayat Jaga Seluruh Petugas</p>
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <h2 class="text-2xl font-black text-slate-800 uppercase tracking-tighter">Rekap Presensi</h2>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase mb-4">Riwayat Jaga Seluruh Petugas</p>
+                    </div>
+                    <button onclick="downloadExcel()" class="bg-emerald-500 text-white p-3 rounded-xl text-[10px] font-bold shadow-lg flex items-center gap-2">
+                        📥 EXCEL
+                    </button>
+                </div>
+
+                <div class="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+                    <select id="filter-bulan" onchange="renderRekap()" class="w-full bg-white border border-slate-200 p-3 rounded-xl text-[11px] font-bold text-slate-700 outline-none">
+                        <option value="01">JANUARI</option>
+                        <option value="02">FEBRUARI</option>
+                        <option value="03">MARET</option>
+                        <option value="04">APRIL</option>
+                        <option value="05">MEI</option>
+                        <option value="06">JUNI</option>
+                        <option value="07">JULI</option>
+                        <option value="08">AGUSTUS</option>
+                        <option value="09">SEPTEMBER</option>
+                        <option value="10">OKTOBER</option>
+                        <option value="11">NOVEMBER</option>
+                        <option value="12">DESEMBER</option>
+                    </select>
+                    <select id="filter-tahun" onchange="renderRekap()" class="bg-white border border-slate-200 p-3 rounded-xl text-[11px] font-bold text-slate-700 outline-none">
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                    </select>
+                </div>
+
                 <div class="rekap-wrapper bg-white border border-slate-100 shadow-sm">
-                    <table class="rekap-table">
+                    <table class="rekap-table" id="table-to-download">
                         <thead>
                             <tr>
                                 <th>NAMA</th>
-                                <th>NIP</th>
                                 <th>TANGGAL</th>
                                 <th>MASUK - PULANG</th>
                                 <th>KET</th>
@@ -253,7 +284,6 @@
                     </svg>
                 </div>
             </div>
-            
             <div id="geo-info">
                 <div class="flex items-center gap-3 w-full justify-center">
                     <div id="signal-bars" class="signal-container">
@@ -267,7 +297,6 @@
                 <p id="distance-text" class="text-[12px] font-extrabold text-slate-800"></p>
                 <div id="map-preview-img" class="map-preview hidden"></div>
             </div>
-
             <button onclick="closeScanModal()" class="w-full mt-4 p-4 rounded-xl bg-slate-100 text-slate-500 font-black text-[10px] uppercase">Tutup Scanner</button>
         </div>
     </div>
@@ -324,11 +353,24 @@
     </div>
 </div>
 
+<div id="modal-logout" class="modal-overlay">
+    <div class="modal-card">
+        <div class="pink-header p-6 text-white text-center"><h3 class="font-black uppercase text-sm">Konfirmasi Keluar</h3></div>
+        <div class="p-8 text-center">
+            <div class="w-20 h-20 bg-pink-50 text-pink-500 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">🚪</div>
+            <h4 class="text-slate-800 font-extrabold text-sm uppercase">Yakin ingin keluar?</h4>
+            <p class="text-[10px] text-slate-400 font-bold mt-2 uppercase leading-relaxed">Anda perlu melakukan verifikasi wajah kembali saat masuk sistem.</p>
+            <div class="grid grid-cols-2 gap-3 mt-8">
+                <button onclick="logout()" class="btn-primary text-[10px]">YA, KELUAR</button>
+                <button onclick="closeLogoutModal()" class="w-full bg-slate-100 text-slate-500 py-4 rounded-xl font-black text-[10px] uppercase">BATAL</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyodVwWDRpMBD-0WV2Mib9oGZKEcf3eiLtS6VE193qGT93HAvmenp_Lgl98i8bywrWA/exec";
-    
-    // GEOFENCING CONFIG (UPTD PUSKESMAS SAMPANAHAN)
-    const TARGET_LOC = { lat: -2.876543, lng: 116.234567, radius: 100 }; 
+    const TARGET_LOC = { lat: -2.637013, lng: 116.203609, radius: 100 }; 
 
     let state = { 
         user: localStorage.getItem('gardena_user') || null, 
@@ -337,13 +379,60 @@
         qrScanner: null,
         modelsLoaded: false,
         currentLocation: null,
-        currentDescriptor: null
+        currentDescriptor: null,
+        qrScannerRunning: false,
+        geoWatchId: null
     };
+
+    // AUDIO UTILITY (WEB AUDIO API)
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playTone(freq, type, duration, vol = 0.1) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+    }
+    function soundSuccess() { playTone(523.25, 'sine', 0.2); setTimeout(() => playTone(659.25, 'sine', 0.3), 100); }
+    function soundError() { playTone(220, 'sawtooth', 0.3, 0.05); setTimeout(() => playTone(196, 'sawtooth', 0.4, 0.05), 150); }
+
+    /**
+     * SINKRONISASI JAM (GMT+8 / WITA - Asia/Makassar)
+     * Memastikan data yang diterima dari server maupun jam HP ditampilkan secara konsisten
+     */
+    function formatTimeFix(rawTime) {
+        if (!rawTime) return "-";
+        
+        try {
+            // Jika rawTime adalah string jam murni (HH:mm) dari clientTime
+            if (typeof rawTime === 'string' && /^\d{2}:\d{2}$/.test(rawTime)) {
+                return rawTime;
+            }
+
+            const date = new Date(rawTime);
+            if (!isNaN(date.getTime())) {
+                // Gunakan Asia/Makassar (GMT+8) secara eksplisit
+                return date.toLocaleTimeString('id-ID', { 
+                    hour: '2-digit', 
+                    minute: '2-digit', 
+                    hour12: false,
+                    timeZone: 'Asia/Makassar' 
+                }).replace('.', ':');
+            }
+        } catch (e) {}
+        return rawTime;
+    }
 
     function triggerHaptic(type = "error") {
         if ("vibrate" in navigator) {
             if (type === "success") navigator.vibrate(50);
-            else navigator.vibrate([100, 50, 100]); 
+            else if (type === "fail") navigator.vibrate([100, 50, 100]);
+            else if (type === "confirm") navigator.vibrate(30);
         }
     }
 
@@ -358,34 +447,53 @@
         return Math.round(R * c);
     }
 
+    function startGeoMonitoring() {
+        if (!navigator.geolocation) return;
+        if (state.geoWatchId) navigator.geolocation.clearWatch(state.geoWatchId);
+        state.geoWatchId = navigator.geolocation.watchPosition((pos) => {
+            const dist = calculateDistance(pos.coords.latitude, pos.coords.longitude, TARGET_LOC.lat, TARGET_LOC.lng);
+            const profText = document.getElementById('profile-gps-text');
+            const profDot = document.getElementById('profile-gps-dot');
+            if (dist <= TARGET_LOC.radius) {
+                profText.innerText = "Area Puskesmas ✅";
+                profText.classList.replace('text-slate-400', 'text-emerald-400');
+                profText.classList.replace('text-red-400', 'text-emerald-400');
+                profDot.classList.replace('bg-slate-400', 'bg-emerald-400');
+                profDot.classList.replace('bg-red-500', 'bg-emerald-400');
+            } else {
+                profText.innerText = "Luar Puskesmas ⚠️";
+                profText.classList.replace('text-slate-400', 'text-red-400');
+                profText.classList.replace('text-emerald-400', 'text-red-400');
+                profDot.classList.replace('bg-slate-400', 'bg-red-500');
+                profDot.classList.replace('bg-emerald-400', 'bg-red-500');
+            }
+            if (document.getElementById('modal-scan').style.display === 'flex') updateGeoUI(pos);
+        }, (err) => { document.getElementById('profile-gps-text').innerText = "GPS Bermasalah ❌"; }, { enableHighAccuracy: true });
+    }
+
     function updateGeoUI(pos) {
         const dist = calculateDistance(pos.coords.latitude, pos.coords.longitude, TARGET_LOC.lat, TARGET_LOC.lng);
         state.currentLocation = pos;
-        
         const statusText = document.getElementById('geo-status-text');
         const distText = document.getElementById('distance-text');
-        const mapDiv = document.getElementById('map-preview-img');
         const bars = document.querySelectorAll('.signal-bar');
-
         const isSafe = dist <= TARGET_LOC.radius;
-
-        bars.forEach(b => { b.classList.remove('signal-active-green', 'signal-active-red'); });
-
+        bars.forEach(b => b.classList.remove('signal-active-green', 'signal-active-red'));
         if (isSafe) {
             statusText.innerText = "LOKASI AMAN ✅";
             statusText.className = "text-[10px] font-black text-emerald-500 uppercase";
             distText.innerText = `${dist}m (Radius PKM)`;
             bars.forEach(b => b.classList.add('signal-active-green'));
+            if (document.getElementById('modal-scan').style.display === 'flex' && !state.qrScannerRunning) startQRScanner();
         } else {
             statusText.innerText = "DILUAR RADIUS ⚠️";
             statusText.className = "text-[10px] font-black text-red-500 uppercase";
             distText.innerText = `${dist}m (Terlalu Jauh)`;
             bars.forEach(b => b.classList.add('signal-active-red'));
-            triggerHaptic("error");
         }
-        
+        const mapDiv = document.getElementById('map-preview-img');
         mapDiv.classList.remove('hidden');
-        mapDiv.style.backgroundImage = `url('https://maps.googleapis.com/maps/api/staticmap?center=${pos.coords.latitude},${pos.coords.longitude}&zoom=16&size=400x150&markers=color:red%7C${pos.coords.latitude},${pos.coords.longitude}&markers=color:blue%7C${TARGET_LOC.lat},${TARGET_LOC.lng}&key=YOUR_API_KEY_OPTIONAL')`;
+        mapDiv.style.backgroundImage = `url('https://maps.googleapis.com/maps/api/staticmap?center=${pos.coords.latitude},${pos.coords.longitude}&zoom=16&size=400x150&markers=color:red%7C${pos.coords.latitude},${pos.coords.longitude}&markers=color:blue%7C${TARGET_LOC.lat},${TARGET_LOC.lng}&key=')`;
     }
 
     function showAlert(title, msg) {
@@ -411,10 +519,7 @@
             await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
             state.modelsLoaded = true;
             showLoading(false);
-        } catch (e) {
-            showAlert("Error AI", "Gagal memuat sistem pengenal wajah.");
-            showLoading(false);
-        }
+        } catch (e) { showAlert("Error AI", "Gagal memuat pengenal wajah."); showLoading(false); }
     }
 
     function showView(viewName) {
@@ -423,22 +528,24 @@
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         const activeNav = document.getElementById(`nav-${viewName}`);
         if(activeNav) activeNav.classList.add('active');
-        
         const nav = document.getElementById('main-nav');
         const fab = document.getElementById('fab-scan-qr');
-
         if(viewName === 'login') {
-            nav.classList.add('hidden');
-            fab.classList.add('hidden');
+            nav.classList.add('hidden'); fab.classList.add('hidden');
         } else {
             nav.classList.remove('hidden');
             fab.classList.toggle('hidden', viewName !== 'profile');
-            if(viewName === 'rekap') renderRekap();
-            if(viewName === 'profile') {
-                renderDailyLog();
-                updateDashboardStats();
-            }
+            if(viewName === 'rekap') { setFilterDefault(); renderRekap(); }
+            if(viewName === 'profile') { renderDailyLog(); updateDashboardStats(); startGeoMonitoring(); }
         }
+    }
+
+    function setFilterDefault() {
+        const now = new Date();
+        const bulan = (now.getMonth() + 1).toString().padStart(2, '0');
+        const tahun = now.getFullYear().toString();
+        document.getElementById('filter-bulan').value = bulan;
+        document.getElementById('filter-tahun').value = tahun;
     }
 
     async function callGAS(method, args = []) {
@@ -446,10 +553,7 @@
         try {
             const response = await fetch(fetchUrl);
             return await response.json();
-        } catch (e) {
-            showAlert("Error", "Gagal koneksi server.");
-            throw e;
-        }
+        } catch (e) { showAlert("Error", "Gagal koneksi server."); throw e; }
     }
 
     async function fetchData() {
@@ -463,28 +567,21 @@
                     res.officers.map(o => `<option value="${o}">${o}</option>`).join('');
             }
             showLoading(false);
-            if(state.user) {
-                updateDashboardStats();
-                renderDailyLog();
-                renderRekap();
-            }
+            if(state.user) { updateDashboardStats(); renderDailyLog(); renderRekap(); }
         } catch (e) { showLoading(false); }
     }
 
     function updateDashboardStats() {
         if (!state.user) return;
         const now = new Date();
-        const month = (now.getMonth() + 1).toString().padStart(2, '0');
-        const year = now.getFullYear();
-        
+        const currentMonth = now.toLocaleDateString('id-ID', { month: '2-digit', timeZone: 'Asia/Makassar' });
+        const currentYear = now.toLocaleDateString('id-ID', { year: 'numeric', timeZone: 'Asia/Makassar' });
         const myLogs = state.data.logs.filter(l => {
             const p = l.date.split('/');
-            return l.name === state.user && p[1] == month && p[2] == year;
+            return l.name === state.user && p[1] === currentMonth && p[2] === currentYear;
         });
-
         const hadirDays = new Set(myLogs.filter(l => l.type === 'MASUK' || l.type === 'DL').map(l => l.date)).size;
         const dlFreq = myLogs.filter(l => l.type === 'DL').length;
-
         document.getElementById('stat-hadir').innerText = hadirDays;
         document.getElementById('stat-dl').innerText = dlFreq;
     }
@@ -497,10 +594,7 @@
             const videoEl = document.getElementById(targetId);
             videoEl.srcObject = state.stream;
             return new Promise((resolve) => { videoEl.onloadedmetadata = () => resolve(true); });
-        } catch (err) {
-            showAlert("Gagal Kamera", "Izin kamera ditolak atau tidak ditemukan.");
-            return false;
-        }
+        } catch (err) { showAlert("Gagal Kamera", "Izin kamera ditolak."); return false; }
     }
 
     function isFaceAligned(detection, videoWidth, videoHeight) {
@@ -533,25 +627,20 @@
         const statusEl = document.getElementById('face-status-text');
         const oval = document.getElementById('login-oval');
         if (!state.stream || !video) return;
-        const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
-            .withFaceLandmarks()
-            .withFaceDescriptor();
+        const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
         const alignment = isFaceAligned(detection, video.videoWidth, video.videoHeight);
         if (alignment.aligned) {
             state.currentDescriptor = detection.descriptor;
-            oval.classList.remove('invalid');
-            oval.classList.add('valid');
+            oval.classList.remove('invalid'); oval.classList.add('valid');
             statusEl.innerText = alignment.status;
             statusEl.className = "text-[8px] text-center mt-4 font-bold text-emerald-500 uppercase";
-            btn.disabled = false;
-            btn.innerText = "VERIFIKASI & MASUK";
+            btn.disabled = false; btn.innerText = "VERIFIKASI & MASUK";
+            triggerHaptic("confirm"); 
         } else {
-            oval.classList.remove('valid');
-            if (detection) oval.classList.add('invalid');
+            oval.classList.remove('valid'); if (detection) oval.classList.add('invalid');
             statusEl.innerText = alignment.status;
             statusEl.className = "text-[8px] text-center mt-4 font-bold text-red-400 uppercase";
-            btn.disabled = true;
-            btn.innerText = "MENUNGGU WAJAH...";
+            btn.disabled = true; btn.innerText = "MENUNGGU WAJAH...";
             setTimeout(detectFaceLoop, 200);
         }
     }
@@ -559,57 +648,54 @@
     async function confirmFaceAuth() {
         const selectedUser = document.getElementById('select-user').value;
         const officerData = state.data.descriptors ? state.data.descriptors.find(d => d.name === selectedUser) : null;
-        if (!officerData || !officerData.descriptor) {
-            showAlert("Belum Terdaftar", "Data wajah tidak ditemukan. Silakan daftar ulang.");
-            return closeFaceModal();
+        if (!officerData) { 
+            soundError(); triggerHaptic("fail");
+            showAlert("Belum Terdaftar", "Data wajah tidak ditemukan."); 
+            return closeFaceModal(); 
         }
         try {
             const savedDescriptor = new Float32Array(JSON.parse(officerData.descriptor));
             const faceMatcher = new faceapi.FaceMatcher(savedDescriptor, 0.6);
             const match = faceMatcher.findBestMatch(state.currentDescriptor);
             if (match.label !== 'unknown') {
+                soundSuccess(); triggerHaptic("success");
                 state.user = selectedUser;
                 localStorage.setItem('gardena_user', selectedUser);
                 document.getElementById('prof-name').innerText = selectedUser;
-                closeFaceModal();
-                showView('profile');
-                updateDashboardStats();
+                closeFaceModal(); showView('profile'); updateDashboardStats();
                 showAlert("Berhasil", "Selamat datang, " + selectedUser);
-            } else {
-                triggerHaptic("error");
-                showAlert("Gagal Verifikasi", "Wajah tidak cocok dengan data terdaftar!");
+            } else { 
+                soundError(); triggerHaptic("fail");
+                showAlert("Gagal Verifikasi", "Wajah tidak cocok!"); 
             }
-        } catch (e) {
-            showAlert("Error", "Gagal memproses verifikasi wajah.");
-        }
+        } catch (e) { soundError(); showAlert("Error", "Gagal memproses verifikasi."); }
     }
 
-    function logout() {
-        if(!confirm("Yakin ingin keluar?")) return;
-        localStorage.removeItem('gardena_user');
-        state.user = null;
-        showView('login');
+    function openLogoutModal() { document.getElementById('modal-logout').style.display = 'flex'; }
+    function closeLogoutModal() { document.getElementById('modal-logout').style.display = 'none'; }
+
+    function logout() { 
+        if(state.geoWatchId) navigator.geolocation.clearWatch(state.geoWatchId);
+        localStorage.removeItem('gardena_user'); 
+        state.user = null; 
+        closeLogoutModal();
+        showView('login'); 
     }
 
     function closeFaceModal() {
         if(state.stream) state.stream.getTracks().forEach(t => t.stop());
-        state.stream = null;
-        state.currentDescriptor = null;
+        state.stream = null; state.currentDescriptor = null;
         document.getElementById('modal-face').style.display = 'none';
         document.getElementById('btn-face-action').disabled = true;
         document.getElementById('login-oval').className = 'face-oval';
     }
 
     function handleSelectChange(val) { if (val === 'NEW_REGISTER') openRegister(); }
-    
     async function openRegister() {
         await loadModels();
         document.getElementById('modal-register').style.display = 'flex';
         const success = await getCameraStream('video-register');
-        if (success) {
-            document.getElementById('reg-scanner-line').style.display = 'block';
-            detectFaceLoopRegister();
-        }
+        if (success) { document.getElementById('reg-scanner-line').style.display = 'block'; detectFaceLoopRegister(); }
     }
 
     async function detectFaceLoopRegister() {
@@ -618,89 +704,76 @@
         const statusEl = document.getElementById('reg-status-text');
         const oval = document.getElementById('reg-oval');
         if (!state.stream || !video) return;
-        const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
-            .withFaceLandmarks()
-            .withFaceDescriptor();
+        const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
         const alignment = isFaceAligned(detection, video.videoWidth, video.videoHeight);
         if (alignment.aligned) {
             state.currentDescriptor = detection.descriptor;
-            oval.classList.remove('invalid');
-            oval.classList.add('valid');
+            oval.classList.remove('invalid'); oval.classList.add('valid');
             statusEl.innerText = alignment.status;
             statusEl.className = "text-[8px] text-center font-bold text-emerald-500 uppercase";
             btn.disabled = false;
+            triggerHaptic("confirm");
         } else {
-            oval.classList.remove('valid');
-            if (detection) oval.classList.add('invalid');
+            oval.classList.remove('valid'); if (detection) oval.classList.add('invalid');
             statusEl.innerText = alignment.status;
             statusEl.className = "text-[8px] text-center font-bold text-red-400 uppercase";
-            btn.disabled = true;
-            setTimeout(detectFaceLoopRegister, 200);
+            btn.disabled = true; setTimeout(detectFaceLoopRegister, 200);
         }
     }
 
     function closeRegister() {
         if(state.stream) state.stream.getTracks().forEach(t => t.stop());
-        state.stream = null;
-        state.currentDescriptor = null;
-        document.getElementById('modal-register').style.display = 'none';
+        state.stream = null; document.getElementById('modal-register').style.display = 'none';
         document.getElementById('select-user').value = "";
-        document.getElementById('reg-oval').className = 'face-oval';
     }
 
     async function processRegister() {
         const nama = document.getElementById('reg-nama').value;
         const nip = document.getElementById('reg-nip').value;
         if (!nama || nip.length !== 18) return showAlert("Gagal", "NIP 18 digit wajib!");
-        if (!state.currentDescriptor) return showAlert("Gagal", "Wajah belum terdeteksi.");
         showLoading(true, "Mendaftarkan Wajah...");
         try {
             const descriptorStr = JSON.stringify(Array.from(state.currentDescriptor));
             await callGAS('addOfficer', [nama, nip, descriptorStr]);
-            showAlert("Berhasil", "Akun terdaftar dengan data wajah!");
-            closeRegister();
-            fetchData();
-        } catch (err) { 
-            showLoading(false); 
-            showAlert("Error", "Gagal menyimpan data ke server.");
-        }
+            soundSuccess(); triggerHaptic("success");
+            showAlert("Berhasil", "Akun terdaftar!"); closeRegister(); fetchData();
+        } catch (err) { soundError(); triggerHaptic("fail"); showLoading(false); }
     }
 
     function openScanModal() {
         document.getElementById('modal-scan').style.display = 'flex';
-        document.getElementById('geo-status-text').innerText = "Mencari GPS...";
         if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(updateGeoUI, (err) => {
-                triggerHaptic("error");
-                document.getElementById('geo-status-text').innerText = "GPS TIDAK AKTIF ❌";
+            navigator.geolocation.getCurrentPosition(updateGeoUI, (err) => { 
+                document.getElementById('geo-status-text').innerText = "GPS TIDAK AKTIF ❌"; 
             }, { enableHighAccuracy: true });
         }
+    }
+
+    function startQRScanner() {
+        if (state.qrScannerRunning) return;
+        state.qrScannerRunning = true;
         state.qrScanner = new Html5Qrcode("qr-reader");
         state.qrScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
             if (txt === state.data.config.QR_TEXT) {
                 if (state.currentLocation) {
                     const d = calculateDistance(state.currentLocation.coords.latitude, state.currentLocation.coords.longitude, TARGET_LOC.lat, TARGET_LOC.lng);
                     if (d > TARGET_LOC.radius) {
-                        triggerHaptic("error");
-                        return showAlert("Luar Radius", `Terlalu jauh (${d}m). Absen ditolak!`);
+                        soundError(); triggerHaptic("fail");
+                        return showAlert("Luar Radius", `Terlalu jauh (${d}m)!`);
                     }
                 }
-                processAttendance("QR");
-                closeScanModal();
-            } else { 
-                triggerHaptic("error");
-                showAlert("QR Salah", "QR Code tidak valid!"); 
-            }
-        }).catch(() => { showAlert("Error", "Gagal kamera belakang."); closeScanModal(); });
+                processAttendance("QR"); closeScanModal();
+            } else { soundError(); triggerHaptic("fail"); showAlert("QR Salah", "QR tidak valid!"); }
+        }).catch(() => { state.qrScannerRunning = false; });
     }
 
     function closeScanModal() {
-        if(state.qrScanner) {
-            state.qrScanner.stop().then(() => { state.qrScanner.clear(); document.getElementById('modal-scan').style.display = 'none'; })
-            .catch(() => { document.getElementById('modal-scan').style.display = 'none'; });
+        if(state.qrScanner) { 
+            state.qrScanner.stop().then(() => { 
+                state.qrScanner.clear(); state.qrScannerRunning = false;
+                document.getElementById('modal-scan').style.display = 'none'; 
+            }).catch(() => { document.getElementById('modal-scan').style.display = 'none'; }); 
         } else { document.getElementById('modal-scan').style.display = 'none'; }
-        state.currentLocation = null;
-        document.getElementById('map-preview-img').classList.add('hidden');
     }
 
     function openDLModal() { document.getElementById('modal-dl').style.display = 'flex'; }
@@ -708,84 +781,124 @@
     
     async function processDL() {
         const ket = document.getElementById('dl-keterangan').value;
-        if(!ket) return showAlert("Opps", "Isi keterangan DL!");
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition((pos) => {
-                state.currentLocation = pos;
-                closeDLModal();
-                processAttendance("DL", ket);
-            }, (err) => {
-                closeDLModal();
-                processAttendance("DL", ket);
-            });
-        }
+        if(!ket) return showAlert("Opps", "Isi keterangan!");
+        const todayStr = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Makassar' }).replace(/\./g, '/');
+        const myLogsToday = state.data.logs.filter(l => l.name === state.user && l.date === todayStr);
+        if (myLogsToday.length > 0) return showAlert("Ditolak", "Hari ini sudah ada riwayat absen!");
+        navigator.geolocation.getCurrentPosition((pos) => { 
+            state.currentLocation = pos; closeDLModal(); processAttendance("DL", ket); 
+        }, () => { closeDLModal(); processAttendance("DL", ket); });
     }
 
     async function processAttendance(method, note = "-") {
+        const now = new Date();
+        const optionsDate = { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Makassar' };
+        const todayStr = now.toLocaleDateString('id-ID', optionsDate).replace(/\./g, '/');
+        const myLogsToday = state.data.logs.filter(l => l.name === state.user && l.date === todayStr);
+        
+        const currentTimeStr = now.toLocaleTimeString('id-ID', { 
+            hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Makassar' 
+        }).replace('.', ':');
+        const hour = parseInt(currentTimeStr.split(':')[0]);
+
+        let type = hour < 12 ? "MASUK" : "PULANG";
+        if (method === "DL") type = "DL";
+
+        if (method === "QR") {
+            const hasMasuk = myLogsToday.some(l => l.type === "MASUK" || l.type === "DL");
+            const hasPulang = myLogsToday.some(l => l.type === "PULANG");
+            if (type === "MASUK" && hasMasuk) { soundError(); triggerHaptic("fail"); return showAlert("Ditolak", "Anda sudah absen masuk hari ini!"); }
+            if (type === "PULANG") {
+                if (!hasMasuk) { soundError(); triggerHaptic("fail"); return showAlert("Ditolak", "Absen masuk belum ada!"); }
+                if (hasPulang) { soundError(); triggerHaptic("fail"); return showAlert("Ditolak", "Anda sudah absen pulang!"); }
+                if (myLogsToday.some(l => l.type === "DL")) { soundError(); triggerHaptic("fail"); return showAlert("Ditolak", "Petugas DL tidak perlu absen pulang!"); }
+            }
+        }
+
         showLoading(true);
-        const h = new Date().getHours();
-        const type = h < 12 ? "MASUK" : "PULANG";
         const payload = { 
-            name: state.user, 
-            type: (method === "DL" ? "DL" : type), 
-            note: note,
+            name: state.user, type: type, note: note,
             accuracy: state.currentLocation ? Math.round(state.currentLocation.coords.accuracy) : 0,
-            coord: state.currentLocation ? `${state.currentLocation.coords.latitude},${state.currentLocation.coords.longitude}` : "No-GPS"
+            coord: state.currentLocation ? `${state.currentLocation.coords.latitude},${state.currentLocation.coords.longitude}` : "No-GPS",
+            clientTime: currentTimeStr
         };
-        try {
-            await callGAS('saveAttendance', [payload]);
-            triggerHaptic("success");
-            showAlert("Berhasil", `${payload.type} Tercatat!`);
-            fetchData();
-        } catch (err) { showLoading(false); }
+        try { 
+            await callGAS('saveAttendance', [payload]); 
+            soundSuccess(); triggerHaptic("success"); 
+            showAlert("Berhasil", `${payload.type} Tercatat!`); 
+            fetchData(); 
+        } catch (err) { soundError(); triggerHaptic("fail"); showLoading(false); }
     }
 
     function renderDailyLog() {
         const container = document.getElementById('daily-log-container');
         if(!container) return;
         const now = new Date();
-        const todayStr = now.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\./g, '/');
+        const todayStr = now.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Makassar' }).replace(/\./g, '/');
         const myLogsToday = state.data.logs.filter(l => l.name === state.user && l.date === todayStr);
-        container.innerHTML = myLogsToday.length > 0 ? myLogsToday.map(l => `
-            <div class="log-card">
-                <div>
-                    <p class="text-[10px] font-black text-slate-800 uppercase">${l.type} ${l.type === 'DL' ? '('+l.note+')' : ''}</p>
-                    <p class="text-[8px] text-slate-400 font-bold uppercase">${l.time}</p>
+        if (myLogsToday.length > 0) {
+            container.classList.remove('hidden'); 
+            container.innerHTML = myLogsToday.map(l => `
+                <div class="log-card">
+                    <div>
+                        <p class="text-[10px] font-black text-slate-800 uppercase">${l.type} ${l.type === 'DL' ? '('+l.note+')' : ''}</p>
+                        <p class="text-[8px] text-slate-400 font-bold uppercase">${formatTimeFix(l.time)}</p>
+                    </div>
+                    <span class="text-[7px] font-black px-2 py-1 rounded bg-white border border-slate-100 ${l.status.includes('TERLAMBAT') ? 'text-red-500' : 'text-emerald-500'}">${l.status || 'OK'}</span>
                 </div>
-                <span class="text-[7px] font-black px-2 py-1 rounded bg-white border border-slate-100 ${l.status === 'TERLAMBAT' ? 'text-red-500' : 'text-emerald-500'}">${l.status || 'OK'}</span>
-            </div>
-        `).join('') : '<p class="text-center py-4 text-[9px] font-bold text-slate-300 uppercase">Belum ada absen</p>';
+            `).join('');
+        } else {
+            container.classList.remove('hidden');
+            container.innerHTML = '<p class="text-center py-4 text-[9px] font-bold text-slate-300 uppercase">Belum ada absen hari ini</p>';
+        }
     }
 
     function renderRekap() {
         const tbody = document.getElementById('rekap-table-body');
         if(!tbody) return;
+        const filterBulan = document.getElementById('filter-bulan').value;
+        const filterTahun = document.getElementById('filter-tahun').value;
         const grouped = {};
         state.data.logs.forEach(l => {
+            const parts = l.date.split('/');
+            if (parts[1] !== filterBulan || parts[2] !== filterTahun) return;
             const key = `${l.date}_${l.name}`;
-            if(!grouped[key]) grouped[key] = { name: l.name, nip: l.nip || "-", date: l.date, masuk: "-", pulang: "-", ket: "-" };
-            if(l.type === "MASUK") grouped[key].masuk = l.time;
-            if(l.type === "PULANG") grouped[key].pulang = l.time;
+            if(!grouped[key]) grouped[key] = { name: l.name, date: l.date, masuk: "-", pulang: "-", ket: "-" };
+            const fixedTime = formatTimeFix(l.time);
+            if(l.type === "MASUK") grouped[key].masuk = fixedTime;
+            if(l.type === "PULANG") grouped[key].pulang = fixedTime;
             if(l.type === "DL") { grouped[key].masuk = "DL"; grouped[key].pulang = "DL"; grouped[key].ket = l.note; }
-            if(l.status === "TERLAMBAT") grouped[key].ket = "TERLAMBAT";
+            if(l.status.includes("TERLAMBAT")) grouped[key].ket = l.status;
+            if(l.status === "SANGAT TERLAMBAT") grouped[key].ket = "S. TERLAMBAT";
         });
         const sortedKeys = Object.keys(grouped).sort((a,b) => b.localeCompare(a));
         tbody.innerHTML = sortedKeys.length > 0 ? sortedKeys.map(k => {
             const r = grouped[k];
-            return `<tr><td>${r.name}</td><td>${r.nip}</td><td>${r.date}</td><td>${r.masuk} - ${r.pulang}</td><td><span class="${r.ket === 'TERLAMBAT' ? 'text-red-500' : 'text-blue-500'}">${r.ket}</span></td></tr>`;
-        }).join('') : '<tr><td colspan="5" class="text-center py-10 text-slate-300">Belum ada riwayat</td></tr>';
+            return `<tr><td>${r.name}</td><td>${r.date}</td><td>${r.masuk} - ${r.pulang}</td><td><span class="${r.ket.includes('TERLAMBAT') ? 'text-red-500' : 'text-blue-500'}">${r.ket}</span></td></tr>`;
+        }).join('') : '<tr><td colspan="4" class="text-center py-10 text-slate-300">Data tidak ditemukan</td></tr>';
+    }
+
+    function downloadExcel() {
+        const filterBulan = document.getElementById('filter-bulan').options[document.getElementById('filter-bulan').selectedIndex].text;
+        const filterTahun = document.getElementById('filter-tahun').value;
+        const table = document.getElementById('table-to-download');
+        const wb = XLSX.utils.table_to_book(table, { sheet: "Rekap Presensi" });
+        XLSX.writeFile(wb, `REKAP_GARDENA_${filterBulan}_${filterTahun}.xlsx`);
     }
 
     window.onload = () => { 
         fetchData();
-        if(state.user) {
-            document.getElementById('prof-name').innerText = state.user;
-            showView('profile');
+        if(state.user) { 
+            document.getElementById('prof-name').innerText = state.user; 
+            showView('profile'); 
+            startGeoMonitoring();
         }
         setInterval(() => {
             const now = new Date();
             const clock = document.getElementById('clock-display');
-            if(clock) clock.innerText = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            if(clock) clock.innerText = now.toLocaleTimeString('id-ID', { 
+                hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Makassar' 
+            }).replace('.', ':');
         }, 1000); 
     };
 </script>

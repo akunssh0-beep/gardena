@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Daftar Petugas Baru - GARDENA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.mjs" type="module"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+
+    <style>
+        :root { --primary: #db2777; --accent: #6366f1; --bg: #f1f5f9; --card-bg: #ffffff; --border-color: #e2e8f0; --text-main: #0f172a; --text-mute: #64748b; }
+        .dark { --bg: #020617; --card-bg: #0f172a; --border-color: #1e293b; --text-main: #f8fafc; --text-mute: #94a3b8; }
+        * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; transition: 0.3s; }
+        body { background-color: var(--bg); height: 100dvh; margin: 0; display: flex; justify-content: center; overflow: hidden; }
+        .app-container { width: 100%; max-width: 500px; background: var(--card-bg); height: 100dvh; display: flex; flex-direction: column; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .scrollable-content { flex: 1; overflow-y: auto; padding-bottom: 40px; scrollbar-width: none; }
+        .scrollable-content::-webkit-scrollbar { display: none; }
+
+        .pink-header { 
+            background: linear-gradient(135deg, #db2777 0%, #be185d 40%, #6366f1 100%); 
+            position: relative;
+            overflow: hidden;
+        }
+
+        .input-group { position: relative; margin-bottom: 20px; }
+        .input-field { 
+            width: 100%; padding: 16px 20px; background: #f8fafc; border: 1.5px solid var(--border-color); 
+            border-radius: 18px; font-size: 13px; font-weight: 700; color: var(--text-main); outline: none;
+        }
+        .input-field:focus { border-color: var(--primary); background: #ffffff; box-shadow: 0 0 0 4px rgba(219, 39, 119, 0.05); }
+
+        .scanner-box { 
+            position: relative; width: 100%; aspect-ratio: 1/1; background: #000; border-radius: 28px; 
+            overflow: hidden; border: 4px solid var(--card-bg); box-shadow: 0 15px 35px rgba(0,0,0,0.1); 
+        }
+        #video-register { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+
+        .face-guide {
+            position: absolute; inset: 0; z-index: 30; pointer-events: none;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .face-oval {
+            width: 65%; height: 75%; border: 3px dashed rgba(255,255,255,0.4); border-radius: 50% 50% 45% 45%;
+            transition: 0.4s;
+        }
+        .face-oval.valid { border-color: #10b981; border-style: solid; box-shadow: 0 0 0 1000px rgba(16, 185, 129, 0.2); }
+
+        .scanning-line { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 3px; 
+            background: linear-gradient(90deg, transparent, #db2777, transparent); 
+            box-shadow: 0 0 15px #db2777; animation: scan 2.5s linear infinite; z-index: 20; 
+        }
+        @keyframes scan { from { top: 0%; } to { top: 100%; } }
+
+        .btn-register {
+            background: linear-gradient(135deg, #db2777, #6366f1); color: white; padding: 18px; 
+            border-radius: 20px; font-weight: 800; width: 100%; border: none; cursor: pointer;
+            box-shadow: 0 10px 25px rgba(219, 39, 119, 0.2); font-size: 12px; letter-spacing: 1px;
+        }
+        .btn-register:disabled { opacity: 0.5; filter: grayscale(1); transform: none; cursor: not-allowed; }
+        .btn-register:active { transform: scale(0.97); }
+
+        #custom-alert { position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-150%); width: 85%; max-width: 360px; background: var(--card-bg); z-index: 2000; padding: 18px 24px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 14px; transition: 0.4s; opacity: 0; border: 1px solid var(--border-color); }
+        #custom-alert.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        
+        .step-container { display: none; }
+        .step-container.active { display: block; }
+    </style>
+</head>
+<body>
+
+<div id="custom-alert">
+    <div id="alert-icon" class="w-11 h-11 rounded-full flex items-center justify-center bg-slate-50 text-indigo-600 text-xl">🔔</div>
+    <div class="flex-1">
+        <p id="alert-title" class="text-[10px] font-black uppercase text-slate-400">Info Sistem</p>
+        <p id="alert-msg" class="text-[12px] font-bold text-slate-700"></p>
+    </div>
+</div>
+
+<div id="loading-overlay" class="hidden fixed inset-0 bg-white/95 z-[3000] flex flex-col items-center justify-center">
+    <dotlottie-player src="https://lottie.host/62f6b864-7476-4654-a690-3375f4f89d38/L6rA3UfP6z.json" speed="1.5" style="width: 120px; height: 120px;" loop autoplay></dotlottie-player>
+    <p id="loading-text" class="text-[10px] font-black uppercase text-slate-500 mt-4 tracking-widest">Memproses AI...</p>
+</div>
+
+<div class="app-container">
+    <div class="pink-header p-6 pt-12 pb-10 rounded-b-[45px] text-white">
+        <div class="flex items-center gap-4 mb-4">
+            <button onclick="window.location.href='index.html'" class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center">⬅️</button>
+            <div>
+                <h2 class="text-xl font-black uppercase">Daftar Petugas</h2>
+                <p class="text-[9px] font-bold opacity-80 uppercase tracking-widest">Pendaftaran Biometrik Wajah</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="scrollable-content px-7 -mt-6">
+        <div id="step-1" class="step-container active space-y-4">
+            <div class="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm">
+                <h3 class="font-extrabold text-slate-800 text-xs mb-6 uppercase text-center">Lengkapi Data Diri 📋</h3>
+                
+                <div class="input-group">
+                    <p class="text-[9px] font-black text-slate-400 uppercase ml-2 mb-1">Nama Lengkap Sesuai SK</p>
+                    <input type="text" id="reg-nama" class="input-field" placeholder="Contoh: Budi Santoso, Amd.Kep">
+                </div>
+
+                <div class="input-group">
+                    <p class="text-[9px] font-black text-slate-400 uppercase ml-2 mb-1">NIP (18 Digit)</p>
+                    <input type="number" id="reg-nip" class="input-field" placeholder="199XXXXXXXXXXXXXXX" oninput="validateNIP(this)">
+                    <p id="nip-info" class="text-[8px] font-bold text-slate-400 mt-1 ml-2 uppercase">Wajib 18 Angka</p>
+                </div>
+
+                <button id="btn-next" onclick="goToStep2()" class="btn-register" disabled>
+                    LANJUTKAN KE KAMERA 📸
+                </button>
+            </div>
+        </div>
+
+        <div id="step-2" class="step-container space-y-4">
+            <div class="bg-white rounded-[32px] p-2 mb-4 border border-slate-100">
+                <div class="scanner-box">
+                    <div class="face-guide">
+                        <div id="reg-oval" class="face-oval"></div>
+                    </div>
+                    <div id="reg-scanner-line" class="scanning-line"></div>
+                    <video id="video-register" autoplay playsinline muted></video>
+                </div>
+            </div>
+
+            <div class="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 flex gap-3">
+                <span id="instruction-icon" class="text-lg">💡</span>
+                <p id="instruction-text" class="text-[9px] font-bold text-indigo-600 uppercase leading-relaxed">
+                    Posisikan wajah Anda tepat di dalam garis oval hijau.
+                </p>
+            </div>
+
+            <button id="btn-save" onclick="processRegister()" class="btn-register mt-4" disabled>
+                SIMPAN DATA PETUGAS ✨
+            </button>
+            <button onclick="backToStep1()" class="w-full text-[9px] font-bold text-slate-400 uppercase mt-2">Ubah Data Diri</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyodVwWDRpMBD-0WV2Mib9oGZKEcf3eiLtS6VE193qGT93HAvmenp_Lgl98i8bywrWA/exec";
+    
+    let state = {
+        stream: null,
+        modelsLoaded: false,
+        currentDescriptor: null,
+        isCapturing: false,
+        isFaceValid: false
+    };
+
+    // AUDIO & HAPTIC UTILITIES
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playTone(freq, type, duration, vol = 0.1) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + duration);
+    }
+    function triggerHaptic(type) {
+        if (!("vibrate" in navigator)) return;
+        if (type === "success") navigator.vibrate(50);
+        else if (type === "fail") navigator.vibrate([100, 50, 100]);
+        else if (type === "lock") navigator.vibrate(30);
+    }
+
+    function showAlert(title, msg) {
+        document.getElementById('alert-title').innerText = title;
+        document.getElementById('alert-msg').innerText = msg;
+        const alert = document.getElementById('custom-alert');
+        alert.classList.add('show');
+        setTimeout(() => alert.classList.remove('show'), 4000);
+    }
+
+    function showLoading(show, text = "Memproses AI...") { 
+        document.getElementById('loading-text').innerText = text;
+        document.getElementById('loading-overlay').classList.toggle('hidden', !show); 
+    }
+
+    // VALIDASI NIP
+    function validateNIP(input) {
+        const info = document.getElementById('nip-info');
+        const btn = document.getElementById('btn-next');
+        const nama = document.getElementById('reg-nama').value;
+        if (input.value.length === 18) {
+            info.innerText = "NIP VALID ✅";
+            info.className = "text-[8px] font-bold text-emerald-500 mt-1 ml-2 uppercase";
+            if(nama.length > 3) btn.disabled = false;
+        } else {
+            info.innerText = "Wajib 18 Angka (" + input.value.length + ")";
+            info.className = "text-[8px] font-bold text-rose-400 mt-1 ml-2 uppercase";
+            btn.disabled = true;
+        }
+    }
+
+    // NAVIGATION
+    async function goToStep2() {
+        document.getElementById('step-1').classList.remove('active');
+        document.getElementById('step-2').classList.add('active');
+        await loadModels();
+    }
+
+    function backToStep1() {
+        if (state.stream) state.stream.getTracks().forEach(t => t.stop());
+        document.getElementById('step-2').classList.remove('active');
+        document.getElementById('step-1').classList.add('active');
+    }
+
+    // FACE API LOGIC
+    async function loadModels() {
+        if (state.modelsLoaded) {
+            startCamera();
+            return;
+        }
+        showLoading(true, "Memuat Mesin AI...");
+        try {
+            const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+            await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+            await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+            await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+            state.modelsLoaded = true;
+            startCamera();
+        } catch (e) {
+            showAlert("Gagal AI", "Gagal memuat modul wajah.");
+            showLoading(false);
+        }
+    }
+
+    async function startCamera() {
+        try {
+            const constraints = { video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 640 } } };
+            state.stream = await navigator.mediaDevices.getUserMedia(constraints);
+            const videoEl = document.getElementById('video-register');
+            videoEl.srcObject = state.stream;
+            videoEl.onloadedmetadata = () => {
+                showLoading(false);
+                detectFaceLoop();
+            };
+        } catch (err) {
+            showAlert("Kamera Error", "Izinkan akses kamera.");
+            showLoading(false);
+        }
+    }
+
+    async function detectFaceLoop() {
+        const video = document.getElementById('video-register');
+        const oval = document.getElementById('reg-oval');
+        const btn = document.getElementById('btn-save');
+        const instText = document.getElementById('instruction-text');
+        
+        if (!state.stream || !video || !document.getElementById('step-2').classList.contains('active')) return;
+
+        const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+            .withFaceLandmarks()
+            .withFaceDescriptor();
+
+        if (detection) {
+            const box = detection.detection.box;
+            const centerX = box.x + box.width / 2;
+            const centerY = box.y + box.height / 2;
+            
+            // Validasi Posisi Wajah
+            const isCentered = centerX > video.videoWidth * 0.25 && centerX < video.videoWidth * 0.75;
+            const isGoodSize = box.width > video.videoWidth * 0.35 && box.width < video.videoWidth * 0.7;
+
+            if (isCentered && isGoodSize) {
+                state.currentDescriptor = detection.descriptor;
+                if (!state.isFaceValid) {
+                    state.isFaceValid = true;
+                    oval.classList.add('valid');
+                    instText.innerText = "WAJAH TERKUNCI ✅ SIAP DISIMPAN";
+                    instText.className = "text-[9px] font-bold text-emerald-600 uppercase leading-relaxed";
+                    btn.disabled = false;
+                    triggerHaptic("lock");
+                }
+            } else {
+                invalidateFace("Posisikan wajah di tengah oval");
+            }
+        } else {
+            invalidateFace("Mencari wajah...");
+        }
+        
+        requestAnimationFrame(detectFaceLoop);
+    }
+
+    function invalidateFace(msg) {
+        const oval = document.getElementById('reg-oval');
+        const btn = document.getElementById('btn-save');
+        const instText = document.getElementById('instruction-text');
+        state.isFaceValid = false;
+        state.currentDescriptor = null;
+        oval.classList.remove('valid');
+        btn.disabled = true;
+        instText.innerText = msg;
+        instText.className = "text-[9px] font-bold text-indigo-600 uppercase leading-relaxed";
+    }
+
+    async function processRegister() {
+        if (!state.currentDescriptor) {
+            showAlert("Gagal", "Wajah tidak terbaca, silakan ulangi.");
+            return;
+        }
+
+        const nama = document.getElementById('reg-nama').value;
+        const nip = document.getElementById('reg-nip').value;
+
+        showLoading(true, "Mendaftarkan Wajah...");
+        try {
+            const descriptorStr = JSON.stringify(Array.from(state.currentDescriptor));
+            const fetchUrl = `${WEB_APP_URL}?action=addOfficer&data=${encodeURIComponent(JSON.stringify([nama, nip, descriptorStr]))}`;
+            
+            const response = await fetch(fetchUrl);
+            const res = await response.json();
+
+            if (res.success) {
+                triggerHaptic("success");
+                playTone(523.25, 'sine', 0.2);
+                setTimeout(() => playTone(659.25, 'sine', 0.3), 100);
+                
+                if (state.stream) state.stream.getTracks().forEach(t => t.stop());
+                showAlert("Berhasil", "Petugas Baru Berhasil Didaftarkan!");
+                setTimeout(() => window.location.href = 'index.html', 2000);
+            } else {
+                throw new Error("Gagal");
+            }
+        } catch (err) {
+            triggerHaptic("fail");
+            playTone(220, 'sawtooth', 0.3, 0.05);
+            showAlert("Gagal Simpan", "Wajah gagal terekam dengan akurat. Silakan coba lagi.");
+            showLoading(false);
+            // Kembali ke instruksi awal
+            invalidateFace("Wajah tidak stabil, coba lagi");
+        }
+    }
+</script>
+</body>
+</html>

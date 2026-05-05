@@ -43,12 +43,27 @@
             table-layout: fixed; 
         }
         .rekap-table th { background: #f8fafc; padding: 10px 6px; text-align: left; border-bottom: 2px solid #e2e8f0; color: #64748b; font-weight: 800; text-transform: uppercase; }
+        /* Sticky Header */
+        .rekap-table thead th { position: sticky; top: 0; z-index: 10; }
         .rekap-table td { padding: 10px 6px; border-bottom: 1px solid #f1f5f9; color: var(--text-main); font-weight: 600; word-break: break-word; }
 
         .status-badge { padding: 4px 8px; border-radius: 8px; font-size: 8px; font-weight: 800; text-transform: uppercase; }
         .badge-present { background: #ecfdf5; color: #10b981; }
         .badge-dl { background: #ecfeff; color: #0891b2; }
         .badge-absent { background: #fff1f2; color: #f43f5e; }
+
+        /* Style Input Pencarian */
+        .search-box {
+            background: #f8fafc;
+            border: 1.5px solid var(--border-color);
+            border-radius: 14px;
+            padding: 10px 16px;
+            font-size: 11px;
+            font-weight: 700;
+            outline: none;
+            width: 100%;
+        }
+        .search-box:focus { border-color: var(--primary); background: #fff; }
 
         #custom-alert { position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-150%); width: 85%; max-width: 360px; background: var(--card-bg); z-index: 2000; padding: 18px 24px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 14px; transition: 0.4s; opacity: 0; border: 1px solid var(--border-color); }
         #custom-alert.show { transform: translateX(-50%) translateY(0); opacity: 1; }
@@ -57,7 +72,7 @@
 <body>
 
 <div id="custom-alert">
-    <div id="alert-icon" class="w-11 h-11 rounded-full flex items-center justify-center bg-slate-50 text-indigo-600 text-xl">🔔</div>
+    <div id="alert-icon" class="w-11 h-11 rounded-full flex items-center justify-center bg-slate-50 text-indigo-600 text-xl"></div>
     <div class="flex-1">
         <p id="alert-title" class="text-[10px] font-black uppercase text-slate-400">Info Sistem</p>
         <p id="alert-msg" class="text-[12px] font-bold text-slate-700"></p>
@@ -73,14 +88,14 @@
     <div class="pink-header p-6 pt-12 pb-10 rounded-b-[45px] text-white">
         <div class="flex justify-between items-center mb-6">
             <div class="flex items-center gap-4">
-                <button onclick="window.location.href='index.html'" class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center">⬅️</button>
+                <button onclick="window.location.href='index.html'" class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center"></button>
                 <div>
                     <h2 class="text-xl font-black uppercase leading-tight">Rekap Admin</h2>
                     <p class="text-[9px] font-bold opacity-80 uppercase tracking-widest">Manajemen Kehadiran</p>
                 </div>
             </div>
             <button onclick="downloadExcel()" class="bg-emerald-500 text-white px-4 py-2 rounded-xl text-[10px] font-bold shadow-lg flex items-center gap-2">
-                📥 EXCEL
+                 EXCEL
             </button>
         </div>
 
@@ -105,7 +120,11 @@
     </div>
 
     <div class="scrollable-content px-6 mt-6">
-        <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Monitoring Hari Ini</h3>
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Monitoring Hari Ini</h3>
+            <input type="text" id="search-today" oninput="renderTodayMonitoring()" placeholder="Cari Nama..." class="w-1/2 search-box py-2 text-[10px]">
+        </div>
+        
         <div class="rekap-wrapper bg-white shadow-sm overflow-hidden mb-8">
             <table class="rekap-table">
                 <colgroup>
@@ -124,24 +143,36 @@
         </div>
 
         <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Riwayat Bulanan</h3>
-        <div class="flex gap-2 mb-4">
-            <select id="filter-bulan" onchange="renderAdminRekap()" class="w-full bg-white border border-slate-200 p-3 rounded-xl text-[11px] font-bold text-slate-700 outline-none">
-                <option value="01">JANUARI</option>
-                <option value="02">FEBRUARI</option>
-                <option value="03">MARET</option>
-                <option value="04">APRIL</option>
-                <option value="05">MEI</option>
-                <option value="06">JUNI</option>
-                <option value="07">JULI</option>
-                <option value="08">AGUSTUS</option>
-                <option value="09">SEPTEMBER</option>
-                <option value="10">OKTOBER</option>
-                <option value="11">NOVEMBER</option>
-                <option value="12">DESEMBER</option>
-            </select>
-            <select id="filter-tahun" onchange="renderAdminRekap()" class="bg-white border border-slate-200 p-3 rounded-xl text-[11px] font-bold text-slate-700 outline-none">
-                <option value="2025">2025</option>
-                <option value="2026">2026</option>
+        
+        <div class="space-y-2 mb-4">
+            <input type="text" id="search-history" oninput="renderAdminRekap()" placeholder="Cari Nama atau Tanggal..." class="search-box">
+            
+            <div class="flex gap-2">
+                <select id="filter-bulan" onchange="renderAdminRekap()" class="w-full bg-white border border-slate-200 p-3 rounded-xl text-[11px] font-bold text-slate-700 outline-none">
+                    <option value="01">JANUARI</option>
+                    <option value="02">FEBRUARI</option>
+                    <option value="03">MARET</option>
+                    <option value="04">APRIL</option>
+                    <option value="05">MEI</option>
+                    <option value="06">JUNI</option>
+                    <option value="07">JULI</option>
+                    <option value="08">AGUSTUS</option>
+                    <option value="09">SEPTEMBER</option>
+                    <option value="10">OKTOBER</option>
+                    <option value="11">NOVEMBER</option>
+                    <option value="12">DESEMBER</option>
+                </select>
+                <select id="filter-tahun" onchange="renderAdminRekap()" class="bg-white border border-slate-200 p-3 rounded-xl text-[11px] font-bold text-slate-700 outline-none">
+                    <option value="2025">2025</option>
+                    <option value="2026">2026</option>
+                </select>
+            </div>
+            
+            <select id="filter-status" onchange="renderAdminRekap()" class="w-full bg-white border border-slate-200 p-3 rounded-xl text-[11px] font-bold text-slate-700 outline-none">
+                <option value="ALL">SEMUA STATUS</option>
+                <option value="TEPAT WAKTU">TEPAT WAKTU</option>
+                <option value="TERLAMBAT">TERLAMBAT</option>
+                <option value="DL">DINAS LUAR (DL)</option>
             </select>
         </div>
 
@@ -227,13 +258,15 @@
 
     function renderTodayMonitoring() {
         const tbody = document.getElementById('today-monitoring-body');
+        const searchTerm = document.getElementById('search-today').value.toLowerCase();
         const now = new Date();
         const todayStr = now.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Makassar' }).replace(/\./g, '/');
         
-        // Filter log hari ini
         const logsToday = state.logs.filter(l => l.date === todayStr);
 
-        tbody.innerHTML = state.officers.map(name => {
+        const filteredOfficers = state.officers.filter(name => name.toLowerCase().includes(searchTerm));
+
+        tbody.innerHTML = filteredOfficers.map(name => {
             const personalLogs = logsToday.filter(l => l.name === name);
             const isDL = personalLogs.some(l => l.type === 'DL');
             const isPresent = personalLogs.length > 0;
@@ -268,6 +301,8 @@
         const tbody = document.getElementById('admin-rekap-body');
         const filterBulan = document.getElementById('filter-bulan').value;
         const filterTahun = document.getElementById('filter-tahun').value;
+        const filterStatus = document.getElementById('filter-status').value;
+        const searchTerm = document.getElementById('search-history').value.toLowerCase();
         
         let countMasuk = 0;
         let countTelat = 0;
@@ -285,22 +320,37 @@
             if (l.type === "MASUK") {
                 grouped[key].masuk = time;
                 grouped[key].status = l.status;
-                countMasuk++;
-                if(l.status.includes("TERLAMBAT")) countTelat++;
             } else if (l.type === "PULANG") {
                 grouped[key].pulang = time;
             } else if (l.type === "DL") {
                 grouped[key].masuk = "-";
                 grouped[key].pulang = "-";
                 grouped[key].status = "DL";
-                countDL++;
             }
         });
 
-        const sortedKeys = Object.keys(grouped).sort((a,b) => b.localeCompare(a));
-        
-        tbody.innerHTML = sortedKeys.length > 0 ? sortedKeys.map(k => {
-            const r = grouped[k];
+        // Konversi object ke array untuk sorting & filtering
+        let results = Object.values(grouped).sort((a, b) => b.date.localeCompare(a.date));
+
+        // Filter Berdasarkan Search & Status
+        results = results.filter(r => {
+            const matchSearch = r.name.toLowerCase().includes(searchTerm) || r.date.includes(searchTerm);
+            const matchStatus = filterStatus === "ALL" || 
+                               (filterStatus === "DL" && r.status === "DL") ||
+                               (filterStatus === "TERLAMBAT" && r.status.includes("TERLAMBAT")) ||
+                               (filterStatus === "TEPAT WAKTU" && r.status.includes("TEPAT WAKTU"));
+            
+            // Hitung statistik hanya jika masuk filter bulan/tahun (sudah di awal)
+            if (matchSearch && matchStatus) {
+                if (r.status.includes("MASUK") || r.status.includes("WAKTU") || r.status.includes("LAMBAT")) countMasuk++;
+                if (r.status.includes("TERLAMBAT")) countTelat++;
+                if (r.status === "DL") countDL++;
+                return true;
+            }
+            return false;
+        });
+
+        tbody.innerHTML = results.length > 0 ? results.map(r => {
             let statusColor = "text-emerald-500";
             if (r.status.includes("TERLAMBAT")) statusColor = "text-amber-500";
             if (r.status === "DL") statusColor = "text-cyan-500";
@@ -315,7 +365,7 @@
                     <td><span class="${statusColor} font-black uppercase text-[7px]">${r.status}</span></td>
                 </tr>
             `;
-        }).join('') : '<tr><td colspan="4" class="text-center py-20 text-slate-300 font-bold uppercase">Tidak ada data</td></tr>';
+        }).join('') : '<tr><td colspan="4" class="text-center py-20 text-slate-300 font-bold uppercase">Data tidak ditemukan</td></tr>';
 
         document.getElementById('stat-masuk').innerText = countMasuk;
         document.getElementById('stat-telat').innerText = countTelat;

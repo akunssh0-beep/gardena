@@ -36,7 +36,8 @@
             position: relative; width: 100%; aspect-ratio: 1/1; background: #000; border-radius: 28px; 
             overflow: hidden; border: 4px solid var(--card-bg); box-shadow: 0 15px 35px rgba(0,0,0,0.1); 
         }
-        #video-register { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+        #video-register, #canvas-preview { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); position: absolute; inset: 0; }
+        #canvas-preview { transform: scaleX(-1); z-index: 40; display: none; border-radius: 24px; }
 
         .face-guide {
             position: absolute; inset: 0; z-index: 30; pointer-events: none;
@@ -63,24 +64,104 @@
         .btn-register:disabled { opacity: 0.5; filter: grayscale(1); transform: none; cursor: not-allowed; }
         .btn-register:active { transform: scale(0.97); }
 
-        #custom-alert { position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-150%); width: 85%; max-width: 360px; background: var(--card-bg); z-index: 2000; padding: 18px 24px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 14px; transition: 0.4s; opacity: 0; border: 1px solid var(--border-color); }
+        #custom-alert { position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-150%); width: 85%; max-width: 360px; background: var(--card-bg); z-index: 5000; padding: 18px 24px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 14px; transition: 0.4s; opacity: 0; border: 1px solid var(--border-color); }
         #custom-alert.show { transform: translateX(-50%) translateY(0); opacity: 1; }
         
         .step-container { display: none; }
         .step-container.active { display: block; }
+
+        /* MODAL CSS */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px); z-index: 4000;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden; transition: 0.3s;
+        }
+        .modal-overlay.show { opacity: 1; visibility: visible; }
+        .modal-content {
+            width: 85%; max-width: 400px; background: white; border-radius: 35px;
+            padding: 30px; transform: scale(0.9); transition: 0.3s;
+        }
+        .modal-overlay.show .modal-content { transform: scale(1); }
+
+        /* Style Checkbox Custom */
+        .checkbox-container {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            margin-top: 20px; cursor: pointer; user-select: none;
+        }
+        .checkbox-container input { display: none; }
+        .checkmark {
+            width: 18px; height: 18px; border: 2px solid #e2e8f0; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center; transition: 0.2s;
+        }
+        .checkbox-container input:checked + .checkmark {
+            background-color: #db2777; border-color: #db2777;
+        }
+        .checkmark::after {
+            content: ''; color: white; font-size: 12px; display: none;
+        }
+        .checkbox-container input:checked + .checkmark::after { display: block; }
+
+        /* NEW: Lighting Indicator */
+        .light-meter {
+            position: absolute; top: 20px; right: 20px; z-index: 45;
+            padding: 6px 12px; border-radius: 12px; background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px); display: flex; align-items: center; gap: 6px;
+        }
+        .light-dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; }
+        .light-dot.good { background: #10b981; box-shadow: 0 0 10px #10b981; }
     </style>
 </head>
 <body>
 
+<div id="modal-guide" class="modal-overlay">
+    <div class="modal-content text-center">
+        <div class="w-20 h-20 bg-pink-100 rounded-3xl flex items-center justify-center mx-auto mb-6">
+            <span class="text-4xl"></span>
+        </div>
+        <h3 class="text-xl font-black text-slate-800 mb-2 uppercase">Cara Daftar Benar</h3>
+        <p class="text-[11px] font-bold text-slate-400 mb-6 leading-relaxed">
+            Ikuti langkah berikut agar pendaftaran biometrik Anda berhasil tanpa kendala.
+        </p>
+        
+        <div class="space-y-3 mb-4 text-left">
+            <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                <div class="w-6 h-6 bg-pink-500 text-white rounded-full flex items-center justify-center text-[10px] font-black">1</div>
+                <p class="text-[10px] font-bold text-slate-600">Isi Nama & NIP (18 Digit) dengan benar.</p>
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                <div class="w-6 h-6 bg-pink-500 text-white rounded-full flex items-center justify-center text-[10px] font-black">2</div>
+                <p class="text-[10px] font-bold text-slate-600">Cari tempat dengan pencahayaan yang terang.</p>
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                <div class="w-6 h-6 bg-pink-500 text-white rounded-full flex items-center justify-center text-[10px] font-black">3</div>
+                <p class="text-[10px] font-bold text-slate-600">Lepas Masker / Kacamata saat memindai wajah.</p>
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                <div class="w-6 h-6 bg-pink-500 text-white rounded-full flex items-center justify-center text-[10px] font-black">4</div>
+                <p class="text-[10px] font-bold text-slate-600">Pastikan wajah masuk dalam oval hijau.</p>
+            </div>
+        </div>
+
+        <label class="checkbox-container mb-6">
+            <input type="checkbox" id="dont-show-again">
+            <div class="checkmark"></div>
+            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Jangan tampilkan lagi</span>
+        </label>
+
+        <button onclick="closeGuide()" class="btn-register py-4">SAYA MENGERTI</button>
+    </div>
+</div>
+
 <div id="custom-alert">
-    <div id="alert-icon" class="w-11 h-11 rounded-full flex items-center justify-center bg-slate-50 text-indigo-600 text-xl">🔔</div>
+    <div id="alert-icon" class="w-11 h-11 rounded-full flex items-center justify-center bg-slate-50 text-indigo-600 text-xl"></div>
     <div class="flex-1">
         <p id="alert-title" class="text-[10px] font-black uppercase text-slate-400">Info Sistem</p>
         <p id="alert-msg" class="text-[12px] font-bold text-slate-700"></p>
     </div>
 </div>
 
-<div id="loading-overlay" class="hidden fixed inset-0 bg-white/95 z-[3000] flex flex-col items-center justify-center">
+<div id="loading-overlay" class="hidden fixed inset-0 bg-white/95 z-[6000] flex flex-col items-center justify-center">
     <dotlottie-player src="https://lottie.host/62f6b864-7476-4654-a690-3375f4f89d38/L6rA3UfP6z.json" speed="1.5" style="width: 120px; height: 120px;" loop autoplay></dotlottie-player>
     <p id="loading-text" class="text-[10px] font-black uppercase text-slate-500 mt-4 tracking-widest">Memproses AI...</p>
 </div>
@@ -88,7 +169,7 @@
 <div class="app-container">
     <div class="pink-header p-6 pt-12 pb-10 rounded-b-[45px] text-white">
         <div class="flex items-center gap-4 mb-4">
-            <button onclick="window.location.href='index.html'" class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center">⬅️</button>
+            <button onclick="window.location.href='index.html'" class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center"></button>
             <div>
                 <h2 class="text-xl font-black uppercase">Daftar Petugas</h2>
                 <p class="text-[9px] font-bold opacity-80 uppercase tracking-widest">Pendaftaran Biometrik Wajah</p>
@@ -99,7 +180,7 @@
     <div class="scrollable-content px-7 -mt-6">
         <div id="step-1" class="step-container active space-y-4">
             <div class="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm">
-                <h3 class="font-extrabold text-slate-800 text-xs mb-6 uppercase text-center">Lengkapi Data Diri 📋</h3>
+                <h3 class="font-extrabold text-slate-800 text-xs mb-6 uppercase text-center">Lengkapi Data Diri </h3>
                 
                 <div class="input-group">
                     <p class="text-[9px] font-black text-slate-400 uppercase ml-2 mb-1">Nama Lengkap Sesuai SK</p>
@@ -112,8 +193,8 @@
                     <p id="nip-info" class="text-[8px] font-bold text-slate-400 mt-1 ml-2 uppercase">Wajib 18 Angka</p>
                 </div>
 
-                <button id="btn-next" onclick="goToStep2()" class="btn-register" disabled>
-                    LANJUTKAN KE KAMERA 📸
+                <button id="btn-next" onclick="checkNIPAvailability()" class="btn-register" disabled>
+                    LANJUTKAN KE KAMERA 
                 </button>
             </div>
         </div>
@@ -121,25 +202,33 @@
         <div id="step-2" class="step-container space-y-4">
             <div class="bg-white rounded-[32px] p-2 mb-4 border border-slate-100">
                 <div class="scanner-box">
+                    <div class="light-meter">
+                        <div id="light-dot" class="light-dot"></div>
+                        <span id="light-text" class="text-[8px] font-black text-white uppercase">Cek Cahaya</span>
+                    </div>
                     <div class="face-guide">
                         <div id="reg-oval" class="face-oval"></div>
                     </div>
                     <div id="reg-scanner-line" class="scanning-line"></div>
                     <video id="video-register" autoplay playsinline muted></video>
+                    <canvas id="canvas-preview"></canvas>
                 </div>
             </div>
 
             <div class="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 flex gap-3">
-                <span id="instruction-icon" class="text-lg">💡</span>
+                <span id="instruction-icon" class="text-lg"></span>
                 <p id="instruction-text" class="text-[9px] font-bold text-indigo-600 uppercase leading-relaxed">
                     Posisikan wajah Anda tepat di dalam garis oval hijau.
                 </p>
             </div>
 
-            <button id="btn-save" onclick="processRegister()" class="btn-register mt-4" disabled>
-                SIMPAN DATA PETUGAS ✨
-            </button>
-            <button onclick="backToStep1()" class="w-full text-[9px] font-bold text-slate-400 uppercase mt-2">Ubah Data Diri</button>
+            <div id="action-buttons" class="space-y-3">
+                <button id="btn-save" onclick="processRegister()" class="btn-register mt-4" disabled>
+                    SIMPAN DATA PETUGAS 
+                </button>
+                <button id="btn-retry" onclick="retryScan()" class="hidden w-full py-4 rounded-2xl border-2 border-pink-500 text-pink-600 font-bold text-[10px] uppercase">Pindai Ulang </button>
+                <button onclick="backToStep1()" class="w-full text-[9px] font-bold text-slate-400 uppercase mt-2">Ubah Data Diri</button>
+            </div>
         </div>
     </div>
 </div>
@@ -152,10 +241,28 @@
         modelsLoaded: false,
         currentDescriptor: null,
         isCapturing: false,
-        isFaceValid: false
+        isFaceValid: false,
+        animationFrame: null, // NEW: For memory handling
+        isScanningActive: false
     };
 
-    // AUDIO & HAPTIC UTILITIES
+    window.onload = () => {
+        const skipGuide = localStorage.getItem('skipRegistrationGuide');
+        if (!skipGuide) {
+            setTimeout(() => {
+                document.getElementById('modal-guide').classList.add('show');
+            }, 500);
+        }
+    };
+
+    function closeGuide() {
+        const isChecked = document.getElementById('dont-show-again').checked;
+        if (isChecked) {
+            localStorage.setItem('skipRegistrationGuide', 'true');
+        }
+        document.getElementById('modal-guide').classList.remove('show');
+    }
+
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playTone(freq, type, duration, vol = 0.1) {
         const osc = audioCtx.createOscillator();
@@ -193,13 +300,35 @@
         const btn = document.getElementById('btn-next');
         const nama = document.getElementById('reg-nama').value;
         if (input.value.length === 18) {
-            info.innerText = "NIP VALID ✅";
+            info.innerText = "NIP VALID ";
             info.className = "text-[8px] font-bold text-emerald-500 mt-1 ml-2 uppercase";
             if(nama.length > 3) btn.disabled = false;
         } else {
             info.innerText = "Wajib 18 Angka (" + input.value.length + ")";
             info.className = "text-[8px] font-bold text-rose-400 mt-1 ml-2 uppercase";
             btn.disabled = true;
+        }
+    }
+
+    // NEW: PENGECEKAN NIP GANDA
+    async function checkNIPAvailability() {
+        const nip = document.getElementById('reg-nip').value;
+        showLoading(true, "Mengecek NIP...");
+        
+        try {
+            const response = await fetch(`${WEB_APP_URL}?action=checkNIP&nip=${nip}`);
+            const res = await response.json();
+            
+            if (res.exists) {
+                showLoading(false);
+                showAlert("NIP Terdaftar", `NIP ${nip} sudah terdaftar atas nama ${res.name}.`);
+                triggerHaptic("fail");
+            } else {
+                goToStep2();
+            }
+        } catch (e) {
+            // Jika fitur checkNIP belum ada di backend, biarkan lanjut
+            goToStep2();
         }
     }
 
@@ -211,9 +340,19 @@
     }
 
     function backToStep1() {
-        if (state.stream) state.stream.getTracks().forEach(t => t.stop());
+        stopScanning();
         document.getElementById('step-2').classList.remove('active');
         document.getElementById('step-1').classList.add('active');
+    }
+
+    // MEMORY HANDLING: STOP ALL PROCESSES
+    function stopScanning() {
+        state.isScanningActive = false;
+        if (state.animationFrame) cancelAnimationFrame(state.animationFrame);
+        if (state.stream) {
+            state.stream.getTracks().forEach(t => t.stop());
+            state.stream = null;
+        }
     }
 
     // FACE API LOGIC
@@ -244,6 +383,7 @@
             videoEl.srcObject = state.stream;
             videoEl.onloadedmetadata = () => {
                 showLoading(false);
+                state.isScanningActive = true;
                 detectFaceLoop();
             };
         } catch (err) {
@@ -252,45 +392,69 @@
         }
     }
 
+    // NEW: LIGHTING DETECTION FUNCTION
+    function checkLighting(video) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 100; canvas.height = 100;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, 100, 100);
+        const data = ctx.getImageData(0,0,100,100).data;
+        let brightness = 0;
+        for(let i=0; i<data.length; i+=4) brightness += (data[i] + data[i+1] + data[i+2]) / 3;
+        return brightness / (data.length / 4);
+    }
+
     async function detectFaceLoop() {
         const video = document.getElementById('video-register');
         const oval = document.getElementById('reg-oval');
         const btn = document.getElementById('btn-save');
         const instText = document.getElementById('instruction-text');
+        const lightDot = document.getElementById('light-dot');
+        const lightText = document.getElementById('light-text');
         
-        if (!state.stream || !video || !document.getElementById('step-2').classList.contains('active')) return;
+        if (!state.isScanningActive || !video || !document.getElementById('step-2').classList.contains('active')) return;
 
-        const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
-            .withFaceLandmarks()
-            .withFaceDescriptor();
+        // 1. Indikator Pencahayaan
+        const brightness = checkLighting(video);
+        if(brightness < 50) {
+            lightDot.classList.remove('good');
+            lightText.innerText = "Terlalu Gelap";
+            invalidateFace("Cari tempat lebih terang");
+        } else {
+            lightDot.classList.add('good');
+            lightText.innerText = "Cahaya Bagus";
 
-        if (detection) {
-            const box = detection.detection.box;
-            const centerX = box.x + box.width / 2;
-            const centerY = box.y + box.height / 2;
-            
-            // Validasi Posisi Wajah
-            const isCentered = centerX > video.videoWidth * 0.25 && centerX < video.videoWidth * 0.75;
-            const isGoodSize = box.width > video.videoWidth * 0.35 && box.width < video.videoWidth * 0.7;
+            // 2. Deteksi Wajah
+            const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+                .withFaceLandmarks()
+                .withFaceDescriptor();
 
-            if (isCentered && isGoodSize) {
-                state.currentDescriptor = detection.descriptor;
-                if (!state.isFaceValid) {
-                    state.isFaceValid = true;
-                    oval.classList.add('valid');
-                    instText.innerText = "WAJAH TERKUNCI ✅ SIAP DISIMPAN";
-                    instText.className = "text-[9px] font-bold text-emerald-600 uppercase leading-relaxed";
-                    btn.disabled = false;
-                    triggerHaptic("lock");
+            if (detection) {
+                const box = detection.detection.box;
+                const centerX = box.x + box.width / 2;
+                const centerY = box.y + box.height / 2;
+                const isCentered = centerX > video.videoWidth * 0.25 && centerX < video.videoWidth * 0.75;
+                const isGoodSize = box.width > video.videoWidth * 0.35 && box.width < video.videoWidth * 0.7;
+
+                if (isCentered && isGoodSize) {
+                    state.currentDescriptor = detection.descriptor;
+                    if (!state.isFaceValid) {
+                        state.isFaceValid = true;
+                        oval.classList.add('valid');
+                        instText.innerText = "WAJAH TERKUNCI  SIAP DISIMPAN";
+                        instText.className = "text-[9px] font-bold text-emerald-600 uppercase leading-relaxed";
+                        btn.disabled = false;
+                        triggerHaptic("lock");
+                    }
+                } else {
+                    invalidateFace("Posisikan wajah di tengah oval");
                 }
             } else {
-                invalidateFace("Posisikan wajah di tengah oval");
+                invalidateFace("Mencari wajah...");
             }
-        } else {
-            invalidateFace("Mencari wajah...");
         }
         
-        requestAnimationFrame(detectFaceLoop);
+        state.animationFrame = requestAnimationFrame(detectFaceLoop);
     }
 
     function invalidateFace(msg) {
@@ -305,9 +469,40 @@
         instText.className = "text-[9px] font-bold text-indigo-600 uppercase leading-relaxed";
     }
 
+    // NEW: PREVIEW SCAN RESULT
+    function showPreview() {
+        const video = document.getElementById('video-register');
+        const canvas = document.getElementById('canvas-preview');
+        const ctx = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0);
+        
+        canvas.style.display = 'block';
+        document.getElementById('reg-scanner-line').style.display = 'none';
+        document.getElementById('reg-oval').style.display = 'none';
+        document.getElementById('btn-retry').classList.remove('hidden');
+        document.getElementById('btn-save').innerText = "KONFIRMASI & SIMPAN ";
+        
+        state.isScanningActive = false; // Stop detection loop
+    }
+
+    function retryScan() {
+        const canvas = document.getElementById('canvas-preview');
+        canvas.style.display = 'none';
+        document.getElementById('reg-scanner-line').style.display = 'block';
+        document.getElementById('reg-oval').style.display = 'block';
+        document.getElementById('btn-retry').classList.add('hidden');
+        document.getElementById('btn-save').innerText = "SIMPAN DATA PETUGAS ";
+        
+        state.isScanningActive = true;
+        detectFaceLoop();
+    }
+
     async function processRegister() {
-        if (!state.currentDescriptor) {
-            showAlert("Gagal", "Wajah tidak terbaca, silakan ulangi.");
+        // Jika belum dalam mode preview, tunjukkan preview dulu
+        if (state.isScanningActive) {
+            showPreview();
             return;
         }
 
@@ -317,6 +512,7 @@
         showLoading(true, "Mendaftarkan Wajah...");
         try {
             const descriptorStr = JSON.stringify(Array.from(state.currentDescriptor));
+            // Gunakan encodeURIComponent untuk keamanan data di URL
             const fetchUrl = `${WEB_APP_URL}?action=addOfficer&data=${encodeURIComponent(JSON.stringify([nama, nip, descriptorStr]))}`;
             
             const response = await fetch(fetchUrl);
@@ -327,19 +523,18 @@
                 playTone(523.25, 'sine', 0.2);
                 setTimeout(() => playTone(659.25, 'sine', 0.3), 100);
                 
-                if (state.stream) state.stream.getTracks().forEach(t => t.stop());
+                stopScanning();
                 showAlert("Berhasil", "Petugas Baru Berhasil Didaftarkan!");
                 setTimeout(() => window.location.href = 'index.html', 2000);
             } else {
-                throw new Error("Gagal");
+                throw new Error(res.message || "Gagal");
             }
         } catch (err) {
             triggerHaptic("fail");
             playTone(220, 'sawtooth', 0.3, 0.05);
-            showAlert("Gagal Simpan", "Wajah gagal terekam dengan akurat. Silakan coba lagi.");
+            showAlert("Gagal Simpan", "Terjadi kendala jaringan atau data. Silakan coba lagi.");
             showLoading(false);
-            // Kembali ke instruksi awal
-            invalidateFace("Wajah tidak stabil, coba lagi");
+            retryScan();
         }
     }
 </script>

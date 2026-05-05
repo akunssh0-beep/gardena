@@ -17,41 +17,102 @@
         .dark { --bg: #020617; --card-bg: #0f172a; --border-color: #1e293b; --text-main: #f8fafc; --text-mute: #94a3b8; }
         * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; transition: 0.3s; }
         body { background-color: var(--bg); height: 100dvh; margin: 0; display: flex; justify-content: center; overflow: hidden; }
-        .app-container { width: 100%; max-width: 500px; background: var(--card-bg); height: 100dvh; display: flex; flex-direction: column; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        .scrollable-content { flex: 1; overflow-y: auto; padding-bottom: 120px; scrollbar-width: none; }
-        .scrollable-content::-webkit-scrollbar { display: none; }
         
-        .view-content { display: none; flex-direction: column; width: 100%; }
-        .view-content.active { display: flex; }
+        .app-container { 
+            width: 100%; max-width: 500px; background: var(--card-bg); height: 100dvh; 
+            display: flex; flex-direction: column; position: relative; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow: hidden;
+        }
+
+        /* --- PAGE TRANSITION SYSTEM --- */
+        .scrollable-content { 
+            flex: 1; position: relative; width: 100%; height: 100%;
+            overflow: hidden;
+        }
+        
+        .view-content { 
+            position: absolute; inset: 0; width: 100%; height: 100%;
+            display: none; flex-direction: column; overflow-y: auto; 
+            padding-bottom: 120px; scrollbar-width: none;
+            background: var(--card-bg);
+            animation-duration: 0.5s;
+            animation-fill-mode: both;
+            animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .view-content::-webkit-scrollbar { display: none; }
+        .view-content.active { display: flex; z-index: 10; }
+
+        @keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        @keyframes slideOutLeft { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+        @keyframes slideInLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+        @keyframes slideOutRight { from { transform: translateX(0); } to { transform: translateX(100%); } }
+
+        .slide-in-right { animation-name: slideInRight; }
+        .slide-out-left { animation-name: slideOutLeft; }
+        .slide-in-left { animation-name: slideInLeft; }
+        .slide-out-right { animation-name: slideOutRight; }
+
+        /* --- SPLASH SCREEN STYLES --- */
+        #splash-screen {
+            position: fixed; inset: 0; background: #fff; z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.8s ease, visibility 0.8s;
+        }
+        #splash-screen.fade-out { opacity: 0; visibility: hidden; }
+        
+        .logo-container {
+            position: relative; z-index: 2;
+            animation: scaleUp 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        @keyframes scaleUp {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .pulse-bg {
+            position: absolute; width: 300px; height: 300px;
+            background: radial-gradient(circle, rgba(219, 39, 119, 0.1) 0%, transparent 70%);
+            border-radius: 50%; z-index: 1;
+            animation: heartBeat 2s infinite ease-in-out;
+        }
+        @keyframes heartBeat {
+            0%, 100% { transform: scale(0.8); opacity: 0.3; }
+            50% { transform: scale(1.2); opacity: 0.6; }
+        }
+
+        /* --- STAGGERED FADE-IN ANIMATIONS --- */
+        .anim-header { animation: slideDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+        .anim-card { animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; animation-delay: 0.3s; opacity: 0; }
+        .anim-btn { animation: bounceIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; animation-delay: 0.6s; opacity: 0; }
+
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes slideUpFade {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes bounceIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            70% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
 
         .pink-header { 
             background: linear-gradient(135deg, #db2777 0%, #be185d 40%, #6366f1 100%); 
-            position: relative;
-            overflow: hidden;
+            position: relative; overflow: hidden;
         }
         .pink-header::before {
-            content: "";
-            position: absolute;
-            top: -20px;
-            right: -20px;
-            width: 120px;
-            height: 120px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            filter: blur(20px);
+            content: ""; position: absolute; top: -20px; right: -20px; width: 120px; height: 120px;
+            background: rgba(255, 255, 255, 0.1); border-radius: 50%; filter: blur(20px);
         }
         .pink-header::after {
-            content: "";
-            position: absolute;
-            bottom: -30px;
-            left: -10px;
-            width: 80px;
-            height: 80px;
-            background: rgba(99, 102, 241, 0.2);
-            border-radius: 50%;
-            filter: blur(15px);
+            content: ""; position: absolute; bottom: -30px; left: -10px; width: 80px; height: 80px;
+            background: rgba(99, 102, 241, 0.2); border-radius: 50%; filter: blur(15px);
         }
 
+        /* --- MODALS & SCANNER --- */
         .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(6px); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 24px; }
         .modal-card { background: var(--card-bg); width: 100%; max-width: 400px; border-radius: 28px; overflow: hidden; }
         .scanner-container { position: relative; width: 100%; aspect-ratio: 1/1; background: #000; border-radius: 20px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
@@ -84,18 +145,55 @@
 
         #video-preview, #video-register { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); border-radius: 20px; }
 
+        /* --- UPDATED FLOATING ACTION BUTTON (FAB) --- */
         .fab-scan {
-            position: absolute; bottom: 100px; right: 24px; width: 65px; height: 64px; border-radius: 50%;
-            background: linear-gradient(135deg, #db2777, #6366f1); color: white;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 8px 25px rgba(219, 39, 119, 0.4); z-index: 500; border: none; cursor: pointer;
-            animation: bounce 2s infinite;
+            position: absolute; 
+            bottom: 30px; 
+            left: 50%;
+            transform: translateX(-50%);
+            width: 72px; 
+            height: 72px; 
+            border-radius: 50%;
+            background: linear-gradient(135deg, #db2777, #6366f1); 
+            color: white;
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            box-shadow: 0 8px 25px rgba(219, 39, 119, 0.5); 
+            z-index: 500; 
+            border: 5px solid var(--card-bg); 
+            cursor: pointer;
+            animation: bounceFAB 2s infinite;
         }
-        @keyframes bounce { 0%, 20%, 50%, 80%, 100% {transform: translateY(0);} 40% {transform: translateY(-10px);} 60% {transform: translateY(-5px);} }
+        @keyframes bounceFAB { 0%, 20%, 50%, 80%, 100% {transform: translateX(-50%) translateY(0);} 40% {transform: translateX(-50%) translateY(-10px);} 60% {transform: translateX(-50%) translateY(-5px);} }
 
         .glass-card {
             background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 20px; padding: 12px; text-align: center; color: white;
+        }
+
+        /* --- GHOST BUTTON --- */
+        .ghost-btn-row {
+            margin-top: 12px;
+            width: 100%;
+        }
+        .btn-ghost {
+            background: transparent;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            width: 100%;
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+        }
+        .btn-ghost:active {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(0.98);
         }
 
         .rekap-wrapper { width: 100%; overflow-x: auto; border-radius: 20px; }
@@ -103,8 +201,21 @@
         .rekap-table th { background: #f8fafc; padding: 12px 8px; text-align: left; border-bottom: 2px solid #e2e8f0; color: #64748b; font-weight: 800; text-transform: uppercase; white-space: nowrap; }
         .rekap-table td { padding: 12px 8px; border-bottom: 1px solid #f1f5f9; color: var(--text-main); font-weight: 600; white-space: nowrap; }
 
-        .dashboard-nav { position: absolute; bottom: 0; left: 0; right: 0; background: var(--card-bg); border-top: 1px solid var(--border-color); padding: 10px 20px; z-index: 100; border-radius: 24px 24px 0 0; box-shadow: 0 -10px 40px rgba(0,0,0,0.05); }
-        .nav-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        /* --- BOTTOM NAVIGATION --- */
+        .dashboard-nav { 
+            position: absolute; bottom: 0; left: 0; right: 0; 
+            background: var(--card-bg); 
+            border-top: 1px solid var(--border-color); 
+            padding: 10px 10px 25px 10px; 
+            z-index: 100; 
+            border-radius: 30px 30px 0 0; 
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.05); 
+        }
+        .nav-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 80px 1fr; 
+            align-items: center;
+        }
         .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px; border-radius: 16px; color: var(--text-mute); background: transparent; border: none; cursor: pointer; }
         .nav-item.active { background: #fdf2f8; color: var(--primary); }
 
@@ -123,6 +234,17 @@
 </head>
 <body>
 
+<div id="splash-screen">
+    <div class="pulse-bg"></div>
+    <div class="logo-container text-center">
+        <h1 class="text-5xl font-black tracking-tighter text-pink-600">GARDENA</h1>
+        <p class="text-[10px] font-bold text-slate-400 mt-2 tracking-widest uppercase">Puskesmas Sampanahan</p>
+        <div class="mt-8 flex justify-center">
+            <dotlottie-player src="https://lottie.host/62f6b864-7476-4654-a690-3375f4f89d38/L6rA3UfP6z.json" speed="1" style="width: 60px; height: 60px;" loop autoplay></dotlottie-player>
+        </div>
+    </div>
+</div>
+
 <div id="custom-alert">
     <div id="alert-icon" class="w-11 h-11 rounded-full flex items-center justify-center bg-slate-50 text-indigo-600 text-xl">🔔</div>
     <div class="flex-1">
@@ -139,19 +261,19 @@
 <div class="app-container">
     <div class="scrollable-content">
         <div id="view-login" class="view-content active">
-            <div class="pink-header p-6 pt-10 pb-16 rounded-b-[35px] text-white text-center">
+            <div class="pink-header anim-header p-6 pt-10 pb-16 rounded-b-[35px] text-white text-center">
                 <p class="text-[8px] font-bold opacity-60 uppercase mb-1">🏥 UPTD Puskesmas Sampanahan</p>
                 <h2 class="text-3xl font-black tracking-tighter">GARDENA</h2>
                 <p class="text-[9px] font-bold opacity-80 uppercase mt-1">Garda Terdepan Nakes Sampanahan</p>
             </div>
             <div class="px-6 -mt-8">
-                <div class="bg-white rounded-[32px] p-8 border border-slate-100 text-center shadow-sm">
+                <div class="bg-white anim-card rounded-[32px] p-8 border border-slate-100 text-center shadow-sm">
                     <h3 class="font-extrabold text-slate-800 text-sm mb-6 uppercase">Masuk ke Sistem 👋</h3>
                     <select id="select-user" class="w-full bg-slate-50 border p-4 rounded-xl text-xs font-bold mb-4" onchange="handleSelectChange(this.value)">
                         <option value="">-- Pilih Nama --</option>
                         <option value="NEW_REGISTER" style="color:blue; font-weight:bold;">+ DAFTAR AKUN BARU</option>
                     </select>
-                    <button id="btn-login-trigger" onclick="startFaceAuth()" class="btn-primary text-xs uppercase w-full">Verifikasi & Masuk ✨</button>
+                    <button id="btn-login-trigger" onclick="startFaceAuth()" class="btn-primary anim-btn text-xs uppercase w-full">Verifikasi & Masuk ✨</button>
                 </div>
             </div>
         </div>
@@ -160,23 +282,28 @@
             <div class="pink-header p-6 pt-10 pb-10 text-white rounded-b-[40px]">
                 <div class="flex justify-between items-start mb-6">
                     <div class="flex items-center gap-4 text-left">
-                        <div class="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl border border-white/30 flex items-center justify-center text-2xl">👩‍⚕️</div>
-                        <div class="relative z-10">
-                            <h2 id="prof-name" class="text-lg font-black uppercase leading-tight">PETUGAS</h2>
-                            <div class="flex flex-col gap-0.5 mt-0.5">
+                        <div class="w-16 h-16 bg-white/20 backdrop-blur-md rounded-full border-2 border-white/40 flex items-center justify-center text-3xl shadow-inner overflow-hidden">
+                            <span id="prof-avatar">👩‍⚕️</span>
+                        </div>
+                        <div class="relative z-10 flex flex-col justify-center">
+                            <h2 id="prof-name" class="text-lg font-black uppercase leading-tight tracking-tight">PETUGAS</h2>
+                            <p id="prof-nip" class="text-[10px] font-bold text-slate-300 tracking-wider mb-1 uppercase">NIP. -</p>
+                            <div class="flex flex-col gap-0.5">
                                 <div class="flex items-center gap-1">
                                     <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
-                                    <p class="text-[9px] font-bold opacity-90 tracking-wide uppercase">Penugasan Khusus PKM</p>
+                                    <p class="text-[8px] font-bold opacity-90 tracking-wide uppercase">Penugasan Khusus PKM</p>
                                 </div>
                                 <div id="profile-gps-status" class="flex items-center gap-1.5 bg-black/20 px-2 py-0.5 rounded-full w-fit">
                                     <span id="profile-gps-dot" class="w-1.5 h-1.5 bg-slate-400 rounded-full"></span>
-                                    <p id="profile-gps-text" class="text-[7px] font-black tracking-widest uppercase">Mendeteksi Lokasi...</p>
+                                    <p id="profile-gps-text" class="text-[6px] font-black tracking-widest uppercase">Mendeteksi Lokasi...</p>
                                 </div>
                             </div>
-                            <p id="clock-display" class="text-xl font-bold opacity-80 mt-1">00:00</p>
                         </div>
                     </div>
-                    <button onclick="openLogoutModal()" class="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 flex items-center justify-center relative z-10">🚪</button>
+                    <div class="flex flex-col items-end gap-2">
+                        <button onclick="openLogoutModal()" class="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 flex items-center justify-center relative z-10 shadow-lg">🚪</button>
+                        <p id="clock-display" class="text-lg font-black opacity-90 leading-none">00:00</p>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 relative z-10">
@@ -190,6 +317,12 @@
                         <h4 id="stat-dl" class="text-xl font-black">0</h4>
                         <p class="text-[7px] font-bold opacity-60">FREKUENSI DL</p>
                     </div>
+                </div>
+
+                <div class="ghost-btn-row relative z-10">
+                    <button onclick="showAlert('Info', 'Fitur Riwayat Detail Segera Hadir')" class="btn-ghost">
+                        Lihat Rincian Tugas 📄
+                    </button>
                 </div>
             </div>
 
@@ -259,13 +392,18 @@
     </div>
 
     <button id="fab-scan-qr" onclick="openScanModal()" class="fab-scan hidden">
-        <span class="text-2xl">📸</span>
+        <span class="text-3xl">📸</span>
     </button>
 
     <nav id="main-nav" class="dashboard-nav hidden">
         <div class="nav-grid">
-            <button id="nav-profile" onclick="showView('profile')" class="nav-item active">👤<p class="text-[8px] font-black uppercase">Beranda</p></button>
-            <button id="nav-rekap" onclick="showView('rekap')" class="nav-item">📊<p class="text-[8px] font-black uppercase">Rekap</p></button>
+            <button id="nav-profile" onclick="showView('profile')" class="nav-item active">
+                👤<p class="text-[8px] font-black uppercase">Beranda</p>
+            </button>
+            <div class="w-[80px]"></div>
+            <button id="nav-rekap" onclick="showView('rekap')" class="nav-item">
+                📊<p class="text-[8px] font-black uppercase">Rekap</p>
+            </button>
         </div>
     </nav>
 </div>
@@ -315,14 +453,10 @@
 
 <div id="modal-face" class="modal-overlay">
     <div class="modal-card">
-        <div class="pink-header p-6 text-white text-center">
-            <h3 id="face-modal-title" class="font-black uppercase text-sm">Verifikasi Wajah</h3>
-        </div>
+        <div class="pink-header p-6 text-white text-center"><h3 id="face-modal-title" class="font-black uppercase text-sm">Verifikasi Wajah</h3></div>
         <div class="p-6 relative">
             <div class="scanner-container relative">
-                <div class="face-guide">
-                    <div id="login-oval" class="face-oval"></div>
-                </div>
+                <div class="face-guide"><div id="login-oval" class="face-oval"></div></div>
                 <div id="face-scanner-line" class="scanning-line"></div>
                 <video id="video-preview" autoplay playsinline muted></video>
             </div>
@@ -340,9 +474,7 @@
             <input type="text" id="reg-nama" class="w-full p-4 bg-slate-50 border rounded-xl text-xs font-bold" placeholder="Nama Lengkap">
             <input type="number" id="reg-nip" class="w-full p-4 bg-slate-50 border rounded-xl text-xs font-bold" placeholder="NIP (18 Digit)">
             <div class="scanner-container relative">
-                <div class="face-guide">
-                    <div id="reg-oval" class="face-oval"></div>
-                </div>
+                <div class="face-guide"><div id="reg-oval" class="face-oval"></div></div>
                 <div id="reg-scanner-line" class="scanning-line"></div>
                 <video id="video-register" autoplay playsinline muted></video>
             </div>
@@ -381,10 +513,11 @@
         currentLocation: null,
         currentDescriptor: null,
         qrScannerRunning: false,
-        geoWatchId: null
+        geoWatchId: null,
+        currentView: 'login' 
     };
 
-    // AUDIO UTILITY (WEB AUDIO API)
+    // AUDIO UTILITY
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playTone(freq, type, duration, vol = 0.1) {
         const osc = audioCtx.createOscillator();
@@ -401,28 +534,13 @@
     function soundSuccess() { playTone(523.25, 'sine', 0.2); setTimeout(() => playTone(659.25, 'sine', 0.3), 100); }
     function soundError() { playTone(220, 'sawtooth', 0.3, 0.05); setTimeout(() => playTone(196, 'sawtooth', 0.4, 0.05), 150); }
 
-    /**
-     * SINKRONISASI JAM (GMT+8 / WITA - Asia/Makassar)
-     * Memastikan data yang diterima dari server maupun jam HP ditampilkan secara konsisten
-     */
     function formatTimeFix(rawTime) {
         if (!rawTime) return "-";
-        
         try {
-            // Jika rawTime adalah string jam murni (HH:mm) dari clientTime
-            if (typeof rawTime === 'string' && /^\d{2}:\d{2}$/.test(rawTime)) {
-                return rawTime;
-            }
-
+            if (typeof rawTime === 'string' && /^\d{2}:\d{2}$/.test(rawTime)) return rawTime;
             const date = new Date(rawTime);
             if (!isNaN(date.getTime())) {
-                // Gunakan Asia/Makassar (GMT+8) secara eksplisit
-                return date.toLocaleTimeString('id-ID', { 
-                    hour: '2-digit', 
-                    minute: '2-digit', 
-                    hour12: false,
-                    timeZone: 'Asia/Makassar' 
-                }).replace('.', ':');
+                return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Makassar' }).replace('.', ':');
             }
         } catch (e) {}
         return rawTime;
@@ -440,9 +558,7 @@
         const R = 6371000; 
         const dLat = (lat2 - lat1) * Math.PI / 180;
         const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         return Math.round(R * c);
     }
@@ -454,21 +570,22 @@
             const dist = calculateDistance(pos.coords.latitude, pos.coords.longitude, TARGET_LOC.lat, TARGET_LOC.lng);
             const profText = document.getElementById('profile-gps-text');
             const profDot = document.getElementById('profile-gps-dot');
-            if (dist <= TARGET_LOC.radius) {
-                profText.innerText = "Area Puskesmas ✅";
-                profText.classList.replace('text-slate-400', 'text-emerald-400');
-                profText.classList.replace('text-red-400', 'text-emerald-400');
-                profDot.classList.replace('bg-slate-400', 'bg-emerald-400');
-                profDot.classList.replace('bg-red-500', 'bg-emerald-400');
-            } else {
-                profText.innerText = "Luar Puskesmas ⚠️";
-                profText.classList.replace('text-slate-400', 'text-red-400');
-                profText.classList.replace('text-emerald-400', 'text-red-400');
-                profDot.classList.replace('bg-slate-400', 'bg-red-500');
-                profDot.classList.replace('bg-emerald-400', 'bg-red-500');
+            if (profText) {
+                if (dist <= TARGET_LOC.radius) {
+                    profText.innerText = "Area Puskesmas ✅";
+                    profText.className = "text-[6px] font-black tracking-widest uppercase text-emerald-400";
+                    profDot.className = "w-1.5 h-1.5 bg-emerald-400 rounded-full";
+                } else {
+                    profText.innerText = "Luar Puskesmas ⚠️";
+                    profText.className = "text-[6px] font-black tracking-widest uppercase text-red-400";
+                    profDot.className = "w-1.5 h-1.5 bg-red-500 rounded-full";
+                }
             }
             if (document.getElementById('modal-scan').style.display === 'flex') updateGeoUI(pos);
-        }, (err) => { document.getElementById('profile-gps-text').innerText = "GPS Bermasalah ❌"; }, { enableHighAccuracy: true });
+        }, (err) => { 
+            const p = document.getElementById('profile-gps-text');
+            if(p) p.innerText = "GPS Bermasalah ❌"; 
+        }, { enableHighAccuracy: true });
     }
 
     function updateGeoUI(pos) {
@@ -523,20 +640,62 @@
     }
 
     function showView(viewName) {
-        document.querySelectorAll('.view-content').forEach(v => v.classList.remove('active'));
-        document.getElementById(`view-${viewName}`).classList.add('active');
+        if (viewName === state.currentView) return;
+        const viewOrder = ['login', 'profile', 'rekap'];
+        const oldIdx = viewOrder.indexOf(state.currentView);
+        const newIdx = viewOrder.indexOf(viewName);
+        const oldView = document.getElementById(`view-${state.currentView}`);
+        const newView = document.getElementById(`view-${viewName}`);
+
+        document.querySelectorAll('.view-content').forEach(v => {
+            v.classList.remove('active', 'slide-in-right', 'slide-out-left', 'slide-in-left', 'slide-out-right');
+        });
+
+        if (oldView) {
+            oldView.classList.add('active');
+            if (newIdx > oldIdx) {
+                oldView.classList.add('slide-out-left');
+                newView.classList.add('active', 'slide-in-right');
+            } else {
+                oldView.classList.add('slide-out-right');
+                newView.classList.add('active', 'slide-in-left');
+            }
+            setTimeout(() => { if(state.currentView !== viewName) oldView.classList.remove('active'); }, 500);
+        } else {
+            newView.classList.add('active');
+        }
+
+        state.currentView = viewName;
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         const activeNav = document.getElementById(`nav-${viewName}`);
         if(activeNav) activeNav.classList.add('active');
+        
         const nav = document.getElementById('main-nav');
         const fab = document.getElementById('fab-scan-qr');
+
         if(viewName === 'login') {
             nav.classList.add('hidden'); fab.classList.add('hidden');
         } else {
             nav.classList.remove('hidden');
             fab.classList.toggle('hidden', viewName !== 'profile');
             if(viewName === 'rekap') { setFilterDefault(); renderRekap(); }
-            if(viewName === 'profile') { renderDailyLog(); updateDashboardStats(); startGeoMonitoring(); }
+            if(viewName === 'profile') { 
+                updateProfileInfo(); 
+                renderDailyLog(); 
+                updateDashboardStats(); 
+                startGeoMonitoring(); 
+            }
+        }
+    }
+
+    function updateProfileInfo() {
+        if (!state.user) return;
+        document.getElementById('prof-name').innerText = state.user;
+        
+        // Cari NIP di data descriptor
+        const officer = state.data.descriptors ? state.data.descriptors.find(d => d.name === state.user) : null;
+        if (officer && officer.nip) {
+            document.getElementById('prof-nip').innerText = `NIP. ${officer.nip}`;
         }
     }
 
@@ -557,7 +716,6 @@
     }
 
     async function fetchData() {
-        showLoading(true);
         try {
             const res = await callGAS('getData');
             state.data = res;
@@ -566,9 +724,8 @@
                 sel.innerHTML = '<option value="">-- Pilih Nama --</option><option value="NEW_REGISTER" style="color:blue; font-weight:bold;">+ DAFTAR AKUN BARU</option>' + 
                     res.officers.map(o => `<option value="${o}">${o}</option>`).join('');
             }
-            showLoading(false);
-            if(state.user) { updateDashboardStats(); renderDailyLog(); renderRekap(); }
-        } catch (e) { showLoading(false); }
+            if(state.user) { updateDashboardStats(); renderDailyLog(); renderRekap(); updateProfileInfo(); }
+        } catch (e) { console.error(e); }
     }
 
     function updateDashboardStats() {
@@ -602,8 +759,7 @@
         const { x, y, width, height } = detection.detection.box;
         const centerX = x + width / 2;
         const centerY = y + height / 2;
-        const isCentered = (centerX > videoWidth * 0.3 && centerX < videoWidth * 0.7) && 
-                           (centerY > videoHeight * 0.3 && centerY < videoHeight * 0.7);
+        const isCentered = (centerX > videoWidth * 0.3 && centerX < videoWidth * 0.7) && (centerY > videoHeight * 0.3 && centerY < videoHeight * 0.7);
         if (!isCentered) return { aligned: false, status: "POSISIKAN WAJAH DI TENGAH" };
         if (width < videoWidth * 0.3) return { aligned: false, status: "WAJAH TERLALU JAUH" };
         if (width > videoWidth * 0.6) return { aligned: false, status: "WAJAH TERLALU DEKAT" };
@@ -661,8 +817,8 @@
                 soundSuccess(); triggerHaptic("success");
                 state.user = selectedUser;
                 localStorage.setItem('gardena_user', selectedUser);
-                document.getElementById('prof-name').innerText = selectedUser;
-                closeFaceModal(); showView('profile'); updateDashboardStats();
+                closeFaceModal(); 
+                setTimeout(() => showView('profile'), 300);
                 showAlert("Berhasil", "Selamat datang, " + selectedUser);
             } else { 
                 soundError(); triggerHaptic("fail");
@@ -792,18 +948,12 @@
 
     async function processAttendance(method, note = "-") {
         const now = new Date();
-        const optionsDate = { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Makassar' };
-        const todayStr = now.toLocaleDateString('id-ID', optionsDate).replace(/\./g, '/');
+        const todayStr = now.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Makassar' }).replace(/\./g, '/');
         const myLogsToday = state.data.logs.filter(l => l.name === state.user && l.date === todayStr);
-        
-        const currentTimeStr = now.toLocaleTimeString('id-ID', { 
-            hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Makassar' 
-        }).replace('.', ':');
+        const currentTimeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Makassar' }).replace('.', ':');
         const hour = parseInt(currentTimeStr.split(':')[0]);
-
         let type = hour < 12 ? "MASUK" : "PULANG";
         if (method === "DL") type = "DL";
-
         if (method === "QR") {
             const hasMasuk = myLogsToday.some(l => l.type === "MASUK" || l.type === "DL");
             const hasPulang = myLogsToday.some(l => l.type === "PULANG");
@@ -814,7 +964,6 @@
                 if (myLogsToday.some(l => l.type === "DL")) { soundError(); triggerHaptic("fail"); return showAlert("Ditolak", "Petugas DL tidak perlu absen pulang!"); }
             }
         }
-
         showLoading(true);
         const payload = { 
             name: state.user, type: type, note: note,
@@ -837,7 +986,6 @@
         const todayStr = now.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Makassar' }).replace(/\./g, '/');
         const myLogsToday = state.data.logs.filter(l => l.name === state.user && l.date === todayStr);
         if (myLogsToday.length > 0) {
-            container.classList.remove('hidden'); 
             container.innerHTML = myLogsToday.map(l => `
                 <div class="log-card">
                     <div>
@@ -848,7 +996,6 @@
                 </div>
             `).join('');
         } else {
-            container.classList.remove('hidden');
             container.innerHTML = '<p class="text-center py-4 text-[9px] font-bold text-slate-300 uppercase">Belum ada absen hari ini</p>';
         }
     }
@@ -869,7 +1016,6 @@
             if(l.type === "PULANG") grouped[key].pulang = fixedTime;
             if(l.type === "DL") { grouped[key].masuk = "DL"; grouped[key].pulang = "DL"; grouped[key].ket = l.note; }
             if(l.status.includes("TERLAMBAT")) grouped[key].ket = l.status;
-            if(l.status === "SANGAT TERLAMBAT") grouped[key].ket = "S. TERLAMBAT";
         });
         const sortedKeys = Object.keys(grouped).sort((a,b) => b.localeCompare(a));
         tbody.innerHTML = sortedKeys.length > 0 ? sortedKeys.map(k => {
@@ -886,19 +1032,30 @@
         XLSX.writeFile(wb, `REKAP_GARDENA_${filterBulan}_${filterTahun}.xlsx`);
     }
 
-    window.onload = () => { 
-        fetchData();
-        if(state.user) { 
-            document.getElementById('prof-name').innerText = state.user; 
-            showView('profile'); 
-            startGeoMonitoring();
-        }
+    window.onload = async () => { 
+        await fetchData();
+        setTimeout(() => {
+            const splash = document.getElementById('splash-screen');
+            splash.classList.add('fade-out');
+            if(state.user) { 
+                state.currentView = 'profile';
+                document.getElementById('view-login').classList.remove('active');
+                document.getElementById('view-profile').classList.add('active');
+                const nav = document.getElementById('main-nav');
+                const fab = document.getElementById('fab-scan-qr');
+                nav.classList.remove('hidden');
+                fab.classList.remove('hidden');
+                document.getElementById('nav-profile').classList.add('active');
+                updateProfileInfo();
+                startGeoMonitoring(); 
+                renderDailyLog(); 
+                updateDashboardStats();
+            }
+        }, 3000); 
         setInterval(() => {
             const now = new Date();
             const clock = document.getElementById('clock-display');
-            if(clock) clock.innerText = now.toLocaleTimeString('id-ID', { 
-                hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Makassar' 
-            }).replace('.', ':');
+            if(clock) clock.innerText = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Makassar' }).replace('.', ':');
         }, 1000); 
     };
 </script>

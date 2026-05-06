@@ -305,6 +305,16 @@
             margin-bottom: 4px;
         }
     </style>
+
+    <meta name="theme-color" content="#10b981">
+    <link rel="manifest" href="manifest.json?v=1778025830400">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <style>
+        #offline-banner { position:fixed; top:0; left:0; right:0; background:#ef4444; color:white; text-align:center; padding:5px; z-index:9999; font-weight:bold; display:none; }
+    </style>
+    <div id="offline-banner">MODE OFFLINE - DATA TERSIMPAN LOKAL</div>
 </head>
 <body>
 
@@ -1179,5 +1189,49 @@
         }, 1000); 
     };
 </script>
+
+    <script>
+      const P_CONFIG = { 
+        gps: true, 
+        sync: true 
+      };
+      
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js?v=1778025830400');
+      }
+
+      async function saveAbsensi(data) {
+        let queue = JSON.parse(localStorage.getItem('absensi_queue') || '[]');
+        queue.push({ ...data, timestamp: new Date().toISOString() });
+        localStorage.setItem('absensi_queue', JSON.stringify(queue));
+        
+        if ('serviceWorker' in navigator && 'SyncManager' in window) {
+          const registration = await navigator.serviceWorker.ready;
+          try {
+            await registration.sync.register('sync-absensi');
+          } catch (e) {
+            checkConnectionAndSync();
+          }
+        } else {
+          checkConnectionAndSync();
+        }
+      }
+
+      function checkConnectionAndSync() {
+        if (navigator.onLine) {
+          const queue = JSON.parse(localStorage.getItem('absensi_queue') || '[]');
+          if (queue.length > 0) {
+            console.log('Online! Mengirim ' + queue.length + ' data tertunda...');
+            document.getElementById('offline-banner').style.display = 'none';
+          }
+        } else {
+          document.getElementById('offline-banner').style.display = 'block';
+        }
+      }
+
+      window.addEventListener('online', checkConnectionAndSync);
+      window.addEventListener('load', checkConnectionAndSync);
+      window.addEventListener('offline', () => document.getElementById('offline-banner').style.display='block');
+    </script>
 </body>
 </html>

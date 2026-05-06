@@ -631,7 +631,8 @@
         currentDescriptor: null,
         qrScannerRunning: false,
         geoWatchId: null,
-        currentView: 'login' 
+        currentView: 'login',
+        isProcessing: false // UNTUK CEGAH DOUBLE LOG
     };
 
     // AUDIO UTILITY
@@ -809,7 +810,6 @@
         if (!state.user) return;
         document.getElementById('prof-name').innerText = state.user;
         
-        // Cari NIP di data descriptor
         const officer = state.data.descriptors ? state.data.descriptors.find(d => d.name === state.user) : null;
         if (officer && officer.nip) {
             document.getElementById('prof-nip').innerText = `NIP. ${officer.nip}`;
@@ -1041,6 +1041,9 @@
         state.qrScanner = new Html5Qrcode("qr-reader");
         state.qrScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
             if (txt === state.data.config.QR_TEXT) {
+                // LOCK JIKA SEDANG PROSES
+                if (state.isProcessing) return; 
+
                 if (state.currentLocation) {
                     const d = calculateDistance(state.currentLocation.coords.latitude, state.currentLocation.coords.longitude, TARGET_LOC.lat, TARGET_LOC.lng);
                     if (d > TARGET_LOC.radius) {
@@ -1048,7 +1051,8 @@
                         return showAlert("Luar Radius", `Terlalu jauh (${d}m)!`);
                     }
                 }
-                processAttendance("QR"); closeScanModal();
+                processAttendance("QR"); 
+                closeScanModal();
             } else { soundError(); triggerHaptic("fail"); showAlert("QR Salah", "QR tidak valid!"); }
         }).catch(() => { state.qrScannerRunning = false; });
     }
@@ -1066,17 +1070,23 @@
     function closeDLModal() { document.getElementById('modal-dl').style.display = 'none'; }
     
     async function processDL() {
+        if (state.isProcessing) return;
         const ket = document.getElementById('dl-keterangan').value;
         if(!ket) return showAlert("Opps", "Isi keterangan!");
+        
         const todayStr = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Makassar' }).replace(/\./g, '/');
         const myLogsToday = state.data.logs.filter(l => l.name === state.user && l.date === todayStr);
         if (myLogsToday.length > 0) return showAlert("Ditolak", "Hari ini sudah ada riwayat absen!");
+        
         navigator.geolocation.getCurrentPosition((pos) => { 
             state.currentLocation = pos; closeDLModal(); processAttendance("DL", ket); 
         }, () => { closeDLModal(); processAttendance("DL", ket); });
     }
 
     async function processAttendance(method, note = "-") {
+        if (state.isProcessing) return; // Mencegah double submit
+        state.isProcessing = true; // Kunci akses
+
         const now = new Date();
         const todayStr = now.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Makassar' }).replace(/\./g, '/');
         const myLogsToday = state.data.logs.filter(l => l.name === state.user && l.date === todayStr);
@@ -1084,16 +1094,35 @@
         const hour = parseInt(currentTimeStr.split(':')[0]);
         let type = hour < 12 ? "MASUK" : "PULANG";
         if (method === "DL") type = "DL";
+        
         if (method === "QR") {
             const hasMasuk = myLogsToday.some(l => l.type === "MASUK" || l.type === "DL");
             const hasPulang = myLogsToday.some(l => l.type === "PULANG");
-            if (type === "MASUK" && hasMasuk) { soundError(); triggerHaptic("fail"); return showAlert("Ditolak", "Anda sudah absen masuk hari ini!"); }
+            
+            if (type === "MASUK" && hasMasuk) { 
+                state.isProcessing = false;
+                soundError(); triggerHaptic("fail"); 
+                return showAlert("Ditolak", "Anda sudah absen masuk hari ini!"); 
+            }
             if (type === "PULANG") {
-                if (!hasMasuk) { soundError(); triggerHaptic("fail"); return showAlert("Ditolak", "Absen masuk belum ada!"); }
-                if (hasPulang) { soundError(); triggerHaptic("fail"); return showAlert("Ditolak", "Anda sudah absen pulang!"); }
-                if (myLogsToday.some(l => l.type === "DL")) { soundError(); triggerHaptic("fail"); return showAlert("Ditolak", "Petugas DL tidak perlu absen pulang!"); }
+                if (!hasMasuk) { 
+                    state.isProcessing = false;
+                    soundError(); triggerHaptic("fail"); 
+                    return showAlert("Ditolak", "Absen masuk belum ada!"); 
+                }
+                if (hasPulang) { 
+                    state.isProcessing = false;
+                    soundError(); triggerHaptic("fail"); 
+                    return showAlert("Ditolak", "Anda sudah absen pulang!"); 
+                }
+                if (myLogsToday.some(l => l.type === "DL")) { 
+                    state.isProcessing = false;
+                    soundError(); triggerHaptic("fail"); 
+                    return showAlert("Ditolak", "Petugas DL tidak perlu absen pulang!"); 
+                }
             }
         }
+        
         showLoading(true);
         const payload = { 
             name: state.user, type: type, note: note,
@@ -1101,12 +1130,18 @@
             coord: state.currentLocation ? `${state.currentLocation.coords.latitude},${state.currentLocation.coords.longitude}` : "No-GPS",
             clientTime: currentTimeStr
         };
+        
         try { 
             await callGAS('saveAttendance', [payload]); 
             soundSuccess(); triggerHaptic("success"); 
             showAlert("Berhasil", `${payload.type} Tercatat!`); 
-            fetchData(); 
-        } catch (err) { soundError(); triggerHaptic("fail"); showLoading(false); }
+            await fetchData(); 
+        } catch (err) { 
+            soundError(); triggerHaptic("fail"); 
+        } finally {
+            state.isProcessing = false; // Buka kunci setelah selesai
+            showLoading(false);
+        }
     }
 
     function renderDailyLog() {
@@ -1191,37 +1226,14 @@
 </script>
 
     <script>
-      const P_CONFIG = { 
-        gps: true, 
-        sync: true 
-      };
-      
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js?v=1778025830400');
-      }
-
-      async function saveAbsensi(data) {
-        let queue = JSON.parse(localStorage.getItem('absensi_queue') || '[]');
-        queue.push({ ...data, timestamp: new Date().toISOString() });
-        localStorage.setItem('absensi_queue', JSON.stringify(queue));
-        
-        if ('serviceWorker' in navigator && 'SyncManager' in window) {
-          const registration = await navigator.serviceWorker.ready;
-          try {
-            await registration.sync.register('sync-absensi');
-          } catch (e) {
-            checkConnectionAndSync();
-          }
-        } else {
-          checkConnectionAndSync();
-        }
       }
 
       function checkConnectionAndSync() {
         if (navigator.onLine) {
           const queue = JSON.parse(localStorage.getItem('absensi_queue') || '[]');
           if (queue.length > 0) {
-            console.log('Online! Mengirim ' + queue.length + ' data tertunda...');
             document.getElementById('offline-banner').style.display = 'none';
           }
         } else {

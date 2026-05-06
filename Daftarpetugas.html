@@ -70,7 +70,6 @@
         .step-container { display: none; }
         .step-container.active { display: block; }
 
-        /* MODAL CSS */
         .modal-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.6);
             backdrop-filter: blur(4px); z-index: 4000;
@@ -84,7 +83,6 @@
         }
         .modal-overlay.show .modal-content { transform: scale(1); }
 
-        /* Style Checkbox Custom */
         .checkbox-container {
             display: flex; align-items: center; justify-content: center; gap: 8px;
             margin-top: 20px; cursor: pointer; user-select: none;
@@ -98,11 +96,10 @@
             background-color: #db2777; border-color: #db2777;
         }
         .checkmark::after {
-            content: ''; color: white; font-size: 12px; display: none;
+            content: '✓'; color: white; font-size: 12px; display: none;
         }
         .checkbox-container input:checked + .checkmark::after { display: block; }
 
-        /* NEW: Lighting Indicator */
         .light-meter {
             position: absolute; top: 20px; right: 20px; z-index: 45;
             padding: 6px 12px; border-radius: 12px; background: rgba(0,0,0,0.5);
@@ -110,6 +107,20 @@
         }
         .light-dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; }
         .light-dot.good { background: #10b981; box-shadow: 0 0 10px #10b981; }
+
+        .bug-badge {
+            position: absolute;
+            right: -10px;
+            top: -10px;
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: rotate(15deg);
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -117,7 +128,7 @@
 <div id="modal-guide" class="modal-overlay">
     <div class="modal-content text-center">
         <div class="w-20 h-20 bg-pink-100 rounded-3xl flex items-center justify-center mx-auto mb-6">
-            <span class="text-4xl"></span>
+            <span class="text-4xl">💡</span>
         </div>
         <h3 class="text-xl font-black text-slate-800 mb-2 uppercase">Cara Daftar Benar</h3>
         <p class="text-[11px] font-bold text-slate-400 mb-6 leading-relaxed">
@@ -127,7 +138,7 @@
         <div class="space-y-3 mb-4 text-left">
             <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
                 <div class="w-6 h-6 bg-pink-500 text-white rounded-full flex items-center justify-center text-[10px] font-black">1</div>
-                <p class="text-[10px] font-bold text-slate-600">Isi Nama & NIP (18 Digit) dengan benar.</p>
+                <p class="text-[10px] font-bold text-slate-600">Isi Nama & NIP/ID Petugas dengan benar.</p>
             </div>
             <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
                 <div class="w-6 h-6 bg-pink-500 text-white rounded-full flex items-center justify-center text-[10px] font-black">2</div>
@@ -154,7 +165,7 @@
 </div>
 
 <div id="custom-alert">
-    <div id="alert-icon" class="w-11 h-11 rounded-full flex items-center justify-center bg-slate-50 text-indigo-600 text-xl"></div>
+    <div id="alert-icon" class="w-11 h-11 rounded-full flex items-center justify-center bg-slate-50 text-indigo-600 text-xl">🔔</div>
     <div class="flex-1">
         <p id="alert-title" class="text-[10px] font-black uppercase text-slate-400">Info Sistem</p>
         <p id="alert-msg" class="text-[12px] font-bold text-slate-700"></p>
@@ -168,8 +179,19 @@
 
 <div class="app-container">
     <div class="pink-header p-6 pt-12 pb-10 rounded-b-[45px] text-white">
+        <div class="bug-badge">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10.5 12V20H13.5V12H10.5Z" fill="white" fill-opacity="0.3"/>
+                <path d="M6.00003 14H4.00003C3.44775 14 3.00003 14.4477 3.00003 15C3.00003 15.5523 3.44775 16 4.00003 16H6.00003C6.55231 16 7.00003 15.5523 7.00003 15C7.00003 14.4477 6.55231 14 6.00003 14Z" fill="white" fill-opacity="0.5"/>
+                <path d="M20 14H18C17.4477 14 17 14.4477 17 15C17 15.5523 17.4477 16 18 16H20C20.5523 16 21 15.5523 21 15C21 14.4477 20.5523 14 20 14Z" fill="white" fill-opacity="0.5"/>
+                <path d="M12 4C10.3431 4 9 5.34315 9 7V8.18182C7.26604 8.60155 6 10.1539 6 12V17C6 18.6569 7.34315 20 9 20H15C16.6569 20 18 18.6569 18 17V12C18 10.1539 16.734 8.60155 15 8.18182V7C15 5.34315 13.6569 4 12 4ZM11 7C11 6.44772 11.4477 6 12 6C12.5523 6 13 6.44772 13 7V8H11V7ZM16 12V17C16 17.5523 15.5523 18 15 18H9C8.44772 18 8 17.5523 8 17V12C8 10.8954 8.89543 10 10 10H14C15.1046 10 16 10.8954 16 12Z" fill="white" fill-opacity="0.8"/>
+                <path d="M7 6L5 4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-opacity="0.4"/>
+                <path d="M17 6L19 4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-opacity="0.4"/>
+            </svg>
+        </div>
+
         <div class="flex items-center gap-4 mb-4">
-            <button onclick="window.location.href='index.html'" class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center"></button>
+            <button onclick="window.location.href='index.html'" class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center">🔙</button>
             <div>
                 <h2 class="text-xl font-black uppercase">Daftar Petugas</h2>
                 <p class="text-[9px] font-bold opacity-80 uppercase tracking-widest">Pendaftaran Biometrik Wajah</p>
@@ -180,21 +202,21 @@
     <div class="scrollable-content px-7 -mt-6">
         <div id="step-1" class="step-container active space-y-4">
             <div class="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm">
-                <h3 class="font-extrabold text-slate-800 text-xs mb-6 uppercase text-center">Lengkapi Data Diri </h3>
+                <h3 class="font-extrabold text-slate-800 text-xs mb-6 uppercase text-center">Lengkapi Data Diri 📝</h3>
                 
                 <div class="input-group">
                     <p class="text-[9px] font-black text-slate-400 uppercase ml-2 mb-1">Nama Lengkap Sesuai SK</p>
-                    <input type="text" id="reg-nama" class="input-field" placeholder="Contoh: Budi Santoso, Amd.Kep">
+                    <input type="text" id="reg-nama" class="input-field" placeholder="Contoh: Budi Santoso, Amd.Kep" oninput="validateInput()">
                 </div>
 
                 <div class="input-group">
-                    <p class="text-[9px] font-black text-slate-400 uppercase ml-2 mb-1">NIP (18 Digit)</p>
-                    <input type="number" id="reg-nip" class="input-field" placeholder="199XXXXXXXXXXXXXXX" oninput="validateNIP(this)">
-                    <p id="nip-info" class="text-[8px] font-bold text-slate-400 mt-1 ml-2 uppercase">Wajib 18 Angka</p>
+                    <p class="text-[9px] font-black text-slate-400 uppercase ml-2 mb-1">NIP / ID Petugas</p>
+                    <input type="number" id="reg-nip" class="input-field" placeholder="Masukkan Nomor Identitas" oninput="validateInput()">
+                    <p id="nip-info" class="text-[8px] font-bold text-slate-400 mt-1 ml-2 uppercase">Bebas berapa angka</p>
                 </div>
 
                 <button id="btn-next" onclick="checkNIPAvailability()" class="btn-register" disabled>
-                    LANJUTKAN KE KAMERA 
+                    LANJUTKAN KE KAMERA 📸
                 </button>
             </div>
         </div>
@@ -216,7 +238,7 @@
             </div>
 
             <div class="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 flex gap-3">
-                <span id="instruction-icon" class="text-lg"></span>
+                <span id="instruction-icon" class="text-lg">🎯</span>
                 <p id="instruction-text" class="text-[9px] font-bold text-indigo-600 uppercase leading-relaxed">
                     Posisikan wajah Anda tepat di dalam garis oval hijau.
                 </p>
@@ -224,9 +246,9 @@
 
             <div id="action-buttons" class="space-y-3">
                 <button id="btn-save" onclick="processRegister()" class="btn-register mt-4" disabled>
-                    SIMPAN DATA PETUGAS 
+                    SIMPAN DATA PETUGAS 💾
                 </button>
-                <button id="btn-retry" onclick="retryScan()" class="hidden w-full py-4 rounded-2xl border-2 border-pink-500 text-pink-600 font-bold text-[10px] uppercase">Pindai Ulang </button>
+                <button id="btn-retry" onclick="retryScan()" class="hidden w-full py-4 rounded-2xl border-2 border-pink-500 text-pink-600 font-bold text-[10px] uppercase">Pindai Ulang 🔄</button>
                 <button onclick="backToStep1()" class="w-full text-[9px] font-bold text-slate-400 uppercase mt-2">Ubah Data Diri</button>
             </div>
         </div>
@@ -242,7 +264,7 @@
         currentDescriptor: null,
         isCapturing: false,
         isFaceValid: false,
-        animationFrame: null, // NEW: For memory handling
+        animationFrame: null, 
         isScanningActive: false
     };
 
@@ -294,26 +316,28 @@
         document.getElementById('loading-overlay').classList.toggle('hidden', !show); 
     }
 
-    // VALIDASI NIP
-    function validateNIP(input) {
+    // Fungsi validasi input Nama dan NIP (NIP sekarang bebas panjangnya)
+    function validateInput() {
+        const nama = document.getElementById('reg-nama').value;
+        const nip = document.getElementById('reg-nip').value;
         const info = document.getElementById('nip-info');
         const btn = document.getElementById('btn-next');
-        const nama = document.getElementById('reg-nama').value;
-        if (input.value.length === 18) {
-            info.innerText = "NIP VALID ";
+
+        if (nama.length > 3 && nip.length > 0) {
+            info.innerText = "Data Siap ✅";
             info.className = "text-[8px] font-bold text-emerald-500 mt-1 ml-2 uppercase";
-            if(nama.length > 3) btn.disabled = false;
+            btn.disabled = false;
         } else {
-            info.innerText = "Wajib 18 Angka (" + input.value.length + ")";
+            info.innerText = "Nama min 4 huruf & NIP wajib diisi";
             info.className = "text-[8px] font-bold text-rose-400 mt-1 ml-2 uppercase";
             btn.disabled = true;
         }
     }
 
-    // NEW: PENGECEKAN NIP GANDA
     async function checkNIPAvailability() {
         const nip = document.getElementById('reg-nip').value;
-        showLoading(true, "Mengecek NIP...");
+        const btn = document.getElementById('btn-next');
+        showLoading(true, "Mengecek Keunikan NIP...");
         
         try {
             const response = await fetch(`${WEB_APP_URL}?action=checkNIP&nip=${nip}`);
@@ -321,18 +345,19 @@
             
             if (res.exists) {
                 showLoading(false);
-                showAlert("NIP Terdaftar", `NIP ${nip} sudah terdaftar atas nama ${res.name}.`);
+                showAlert("Akun Ganda", `NIP ${nip} sudah digunakan oleh ${res.name}.`);
                 triggerHaptic("fail");
+                // Jika sudah ada, jangan biarkan lanjut
+                btn.disabled = true;
             } else {
                 goToStep2();
             }
         } catch (e) {
-            // Jika fitur checkNIP belum ada di backend, biarkan lanjut
+            // Jika error koneksi, tetap izinkan lanjut (opsional, tergantung kebijakan server)
             goToStep2();
         }
     }
 
-    // NAVIGATION
     async function goToStep2() {
         document.getElementById('step-1').classList.remove('active');
         document.getElementById('step-2').classList.add('active');
@@ -343,9 +368,9 @@
         stopScanning();
         document.getElementById('step-2').classList.remove('active');
         document.getElementById('step-1').classList.add('active');
+        validateInput(); // Cek lagi tombol di step 1
     }
 
-    // MEMORY HANDLING: STOP ALL PROCESSES
     function stopScanning() {
         state.isScanningActive = false;
         if (state.animationFrame) cancelAnimationFrame(state.animationFrame);
@@ -355,7 +380,6 @@
         }
     }
 
-    // FACE API LOGIC
     async function loadModels() {
         if (state.modelsLoaded) {
             startCamera();
@@ -392,7 +416,6 @@
         }
     }
 
-    // NEW: LIGHTING DETECTION FUNCTION
     function checkLighting(video) {
         const canvas = document.createElement('canvas');
         canvas.width = 100; canvas.height = 100;
@@ -414,7 +437,6 @@
         
         if (!state.isScanningActive || !video || !document.getElementById('step-2').classList.contains('active')) return;
 
-        // 1. Indikator Pencahayaan
         const brightness = checkLighting(video);
         if(brightness < 50) {
             lightDot.classList.remove('good');
@@ -424,7 +446,6 @@
             lightDot.classList.add('good');
             lightText.innerText = "Cahaya Bagus";
 
-            // 2. Deteksi Wajah
             const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
                 .withFaceLandmarks()
                 .withFaceDescriptor();
@@ -441,7 +462,7 @@
                     if (!state.isFaceValid) {
                         state.isFaceValid = true;
                         oval.classList.add('valid');
-                        instText.innerText = "WAJAH TERKUNCI  SIAP DISIMPAN";
+                        instText.innerText = "WAJAH TERKUNCI ✅ SIAP DISIMPAN";
                         instText.className = "text-[9px] font-bold text-emerald-600 uppercase leading-relaxed";
                         btn.disabled = false;
                         triggerHaptic("lock");
@@ -469,7 +490,6 @@
         instText.className = "text-[9px] font-bold text-indigo-600 uppercase leading-relaxed";
     }
 
-    // NEW: PREVIEW SCAN RESULT
     function showPreview() {
         const video = document.getElementById('video-register');
         const canvas = document.getElementById('canvas-preview');
@@ -482,9 +502,9 @@
         document.getElementById('reg-scanner-line').style.display = 'none';
         document.getElementById('reg-oval').style.display = 'none';
         document.getElementById('btn-retry').classList.remove('hidden');
-        document.getElementById('btn-save').innerText = "KONFIRMASI & SIMPAN ";
+        document.getElementById('btn-save').innerText = "KONFIRMASI & SIMPAN 💾";
         
-        state.isScanningActive = false; // Stop detection loop
+        state.isScanningActive = false; 
     }
 
     function retryScan() {
@@ -493,14 +513,13 @@
         document.getElementById('reg-scanner-line').style.display = 'block';
         document.getElementById('reg-oval').style.display = 'block';
         document.getElementById('btn-retry').classList.add('hidden');
-        document.getElementById('btn-save').innerText = "SIMPAN DATA PETUGAS ";
+        document.getElementById('btn-save').innerText = "SIMPAN DATA PETUGAS 💾";
         
         state.isScanningActive = true;
         detectFaceLoop();
     }
 
     async function processRegister() {
-        // Jika belum dalam mode preview, tunjukkan preview dulu
         if (state.isScanningActive) {
             showPreview();
             return;
@@ -512,7 +531,6 @@
         showLoading(true, "Mendaftarkan Wajah...");
         try {
             const descriptorStr = JSON.stringify(Array.from(state.currentDescriptor));
-            // Gunakan encodeURIComponent untuk keamanan data di URL
             const fetchUrl = `${WEB_APP_URL}?action=addOfficer&data=${encodeURIComponent(JSON.stringify([nama, nip, descriptorStr]))}`;
             
             const response = await fetch(fetchUrl);

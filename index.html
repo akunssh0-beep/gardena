@@ -4,12 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>GARDENA - Garda Terdepan Nakes Sampanahan</title>
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.mjs" type="module"></script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
 
     <style>
@@ -162,10 +161,14 @@
         /* --- MODALS & SCANNER --- */
         .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(6px); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 24px; }
         .modal-card { background: var(--card-bg); width: 100%; max-width: 400px; border-radius: 28px; overflow: hidden; }
-        .scanner-container { position: relative; width: 100%; aspect-ratio: 1/1; background: #000; border-radius: 20px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         
+        /* Z-INDEX FIX: Video di level hardware paling bawah, Guide di atasnya */
+        .scanner-container { position: relative; width: 100%; aspect-ratio: 1/1; background: #000; border-radius: 20px; overflow: hidden; display: flex; align-items: center; justify-content: center; z-index: 1; }
+        
+        #video-preview, #video-register { position: absolute; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); border-radius: 20px; z-index: 5; }
+
         .face-guide {
-            position: absolute; inset: 0; z-index: 30; border: 4px solid rgba(255,255,255,0.1); border-radius: 20px;
+            position: absolute; inset: 0; z-index: 15; border: 4px solid rgba(255,255,255,0.1); border-radius: 20px;
             display: flex; align-items: center; justify-content: center; pointer-events: none;
         }
         .face-oval {
@@ -176,7 +179,7 @@
         .face-oval.invalid { border-color: #ef4444; border-style: dashed; }
 
         .scanner-overlay {
-            position: absolute; inset: 0; z-index: 15; pointer-events: none;
+            position: absolute; inset: 0; z-index: 10; pointer-events: none;
             display: flex; align-items: center; justify-content: center;
         }
         .corner-svg { width: 70%; height: 70%; stroke: white; stroke-width: 4; fill: none; opacity: 0.8; animation: pulse-border 2s infinite ease-in-out; }
@@ -189,8 +192,6 @@
         .btn-primary:disabled { opacity: 0.5; filter: grayscale(1); cursor: not-allowed; }
         .btn-outline { border: 2px solid var(--border-color); color: var(--text-mute); padding: 12px; border-radius: 18px; font-weight: 800; width: 100%; margin-top: 10px; cursor: pointer; position: relative; overflow: hidden; }
         .btn-outline:active { background: var(--accent); color: white; border-color: var(--accent); transform: scale(0.96); }
-
-        #video-preview, #video-register { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); border-radius: 20px; }
 
         /* --- UPDATED FLOATING ACTION BUTTON (FAB) --- */
         .fab-scan {
@@ -597,9 +598,9 @@
         <div class="pink-header p-6 text-white text-center"><h3 id="face-modal-title" class="font-black uppercase text-sm">Verifikasi Wajah</h3></div>
         <div class="p-6 relative">
             <div class="scanner-container relative">
-                <div class="face-guide"><div id="login-oval" class="face-oval"></div></div>
-                <div id="face-scanner-line" class="scanning-line"></div>
-                <video id="video-preview" autoplay playsinline muted></video>
+                <div class="face-guide" style="z-index: 20;"><div id="login-oval" class="face-oval"></div></div>
+                <div id="face-scanner-line" class="scanning-line" style="z-index: 21;"></div>
+                <video id="video-preview" autoplay playsinline muted style="z-index: 5;"></video>
             </div>
             <p id="face-status-text" class="text-[8px] text-center mt-4 font-bold text-slate-400 uppercase">Menyiapkan Kamera...</p>
             <button id="btn-face-action" onclick="confirmFaceAuth()" class="btn-primary mt-4 text-[10px]" disabled>MENUNGGU WAJAH...</button>
@@ -615,9 +616,9 @@
             <input type="text" id="reg-nama" class="w-full p-4 bg-slate-50 border rounded-xl text-xs font-bold" placeholder="Nama Lengkap">
             <input type="number" id="reg-nip" class="w-full p-4 bg-slate-50 border rounded-xl text-xs font-bold" placeholder="NIP (Bebas Angka)">
             <div class="scanner-container relative">
-                <div class="face-guide"><div id="reg-oval" class="face-oval"></div></div>
-                <div id="reg-scanner-line" class="scanning-line"></div>
-                <video id="video-register" autoplay playsinline muted></video>
+                <div class="face-guide" style="z-index: 20;"><div id="reg-oval" class="face-oval"></div></div>
+                <div id="reg-scanner-line" class="scanning-line" style="z-index: 21;"></div>
+                <video id="video-register" autoplay playsinline muted style="z-index: 5;"></video>
             </div>
             <p id="reg-status-text" class="text-[8px] text-center font-bold text-slate-400 uppercase">Arahkan Wajah ke Kamera</p>
             <button id="btn-reg-save" onclick="processRegister()" class="btn-primary text-[10px]" disabled>SIMPAN DATA ✨</button>
@@ -656,7 +657,8 @@
         qrScannerRunning: false,
         geoWatchId: null,
         currentView: 'login',
-        isProcessing: false 
+        isProcessing: false,
+        faceDetectionFrame: null // Untuk manajemen RequestAnimationFrame
     };
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -767,17 +769,22 @@
         document.getElementById('loading-overlay').classList.toggle('hidden', !show); 
     }
 
+    /* --- OPTIMASI 1: LOAD MODELS PARALEL --- */
     async function loadModels() {
         if (state.modelsLoaded) return;
-        showLoading(true, "Memuat AI GARDENA...");
         try {
             const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
-            await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-            await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-            await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+            // Gunakan Promise.all agar download model berjalan berbarengan (lebih cepat)
+            await Promise.all([
+                faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+                faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+            ]);
             state.modelsLoaded = true;
-            showLoading(false);
-        } catch (e) { showAlert("Error AI", "Gagal memuat pengenal wajah."); showLoading(false); }
+            console.log("AI Models Loaded Successfully");
+        } catch (e) { 
+            console.error("AI Load Error:", e);
+        }
     }
 
     // FUNGSI REFRESH BARU
@@ -895,15 +902,32 @@
         document.getElementById('stat-dl').innerText = dlFreq;
     }
 
+    /* --- OPTIMASI 2: GET CAMERA STREAM LOW-RES --- */
     async function getCameraStream(targetId) {
         try {
-            const constraints = { video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } } };
+            // Gunakan ideal resolution yang pas untuk mobile (480p) agar loading kamera cepat
+            const constraints = { 
+                video: { 
+                    facingMode: "user", 
+                    width: { ideal: 480 }, 
+                    height: { ideal: 640 },
+                    frameRate: { ideal: 24 }
+                } 
+            };
             if(state.stream) state.stream.getTracks().forEach(t => t.stop());
             state.stream = await navigator.mediaDevices.getUserMedia(constraints);
             const videoEl = document.getElementById(targetId);
             videoEl.srcObject = state.stream;
-            return new Promise((resolve) => { videoEl.onloadedmetadata = () => resolve(true); });
-        } catch (err) { showAlert("Gagal Kamera", "Izin kamera ditolak."); return false; }
+            return new Promise((resolve) => { 
+                videoEl.onloadedmetadata = () => {
+                    videoEl.play();
+                    resolve(true); 
+                };
+            });
+        } catch (err) { 
+            showAlert("Gagal Kamera", "Izin kamera ditolak."); 
+            return false; 
+        }
     }
 
     function isFaceAligned(detection, videoWidth, videoHeight) {
@@ -911,7 +935,8 @@
         const { x, y, width, height } = detection.detection.box;
         const centerX = x + width / 2;
         const centerY = y + height / 2;
-        const isCentered = (centerX > videoWidth * 0.3 && centerX < videoWidth * 0.7) && (centerY > videoHeight * 0.3 && centerY < videoHeight * 0.7);
+        // Penyesuaian center area
+        const isCentered = (centerX > videoWidth * 0.25 && centerX < videoWidth * 0.75) && (centerY > videoHeight * 0.25 && centerY < videoHeight * 0.75);
         if (!isCentered) return { aligned: false, status: "POSISIKAN WAJAH DI TENGAH" };
         if (width < videoWidth * 0.3) return { aligned: false, status: "WAJAH TERLALU JAUH" };
         if (width > videoWidth * 0.6) return { aligned: false, status: "WAJAH TERLALU DEKAT" };
@@ -922,22 +947,38 @@
         const val = document.getElementById('select-user').value;
         if (!val) return showAlert("Opps!", "Pilih nama dulu.");
         if (val === 'NEW_REGISTER') return openRegister();
-        await loadModels();
+        
+        // Memastikan model siap
+        if(!state.modelsLoaded) {
+            showLoading(true, "Menyiapkan AI...");
+            await loadModels();
+            showLoading(false);
+        }
+
         document.getElementById('modal-face').style.display = 'flex';
         const success = await getCameraStream('video-preview');
         if (!success) return closeFaceModal();
         document.getElementById('face-scanner-line').style.display = 'block';
+        
+        // Mulai loop deteksi
         detectFaceLoop();
     }
 
+    /* --- OPTIMASI 3: DETEKSI DENGAN REQUEST ANIMATION FRAME --- */
     async function detectFaceLoop() {
         const video = document.getElementById('video-preview');
         const btn = document.getElementById('btn-face-action');
         const statusEl = document.getElementById('face-status-text');
         const oval = document.getElementById('login-oval');
-        if (!state.stream || !video) return;
-        const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+        
+        if (!state.stream || !video || video.paused) return;
+
+        // Gunakan inputSize kecil (128) untuk deteksi super cepat pada mobile
+        const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 128, scoreThreshold: 0.5 }))
+                                    .withFaceLandmarks().withFaceDescriptor();
+
         const alignment = isFaceAligned(detection, video.videoWidth, video.videoHeight);
+        
         if (alignment.aligned) {
             state.currentDescriptor = detection.descriptor;
             oval.classList.remove('invalid'); oval.classList.add('valid');
@@ -945,15 +986,20 @@
             statusEl.className = "text-[8px] text-center mt-4 font-bold text-emerald-500 uppercase";
             btn.disabled = false; btn.innerText = "VERIFIKASI & MASUK";
             triggerHaptic("confirm"); 
+            // Loop berhenti sementara setelah posisi valid ditemukan
+            state.faceDetectionFrame = null;
         } else {
             oval.classList.remove('valid'); if (detection) oval.classList.add('invalid');
             statusEl.innerText = alignment.status;
             statusEl.className = "text-[8px] text-center mt-4 font-bold text-red-400 uppercase";
             btn.disabled = true; btn.innerText = "MENUNGGU WAJAH...";
-            setTimeout(detectFaceLoop, 200);
+            
+            // Lanjut ke frame berikutnya
+            state.faceDetectionFrame = requestAnimationFrame(detectFaceLoop);
         }
     }
 
+    /* --- UPDATE: THRESHOLD SET TO 0.5 --- */
     async function confirmFaceAuth() {
         const selectedUser = document.getElementById('select-user').value;
         const officerData = state.data.descriptors ? state.data.descriptors.find(d => d.name === selectedUser) : null;
@@ -964,7 +1010,8 @@
         }
         try {
             const savedDescriptor = new Float32Array(JSON.parse(officerData.descriptor));
-            const faceMatcher = new faceapi.FaceMatcher(savedDescriptor, 0.6);
+            // Perubahan nilai FaceMatcher menjadi 0.5 untuk akurasi yang lebih optimal
+            const faceMatcher = new faceapi.FaceMatcher(savedDescriptor, 0.5);
             const match = faceMatcher.findBestMatch(state.currentDescriptor);
             if (match.label !== 'unknown') {
                 soundSuccess(); triggerHaptic("success");
@@ -976,6 +1023,8 @@
             } else { 
                 soundError(); triggerHaptic("fail");
                 showAlert("Gagal Verifikasi", "Wajah tidak cocok!"); 
+                // Restart deteksi jika gagal
+                detectFaceLoop();
             }
         } catch (e) { soundError(); showAlert("Error", "Gagal memproses verifikasi."); }
     }
@@ -993,6 +1042,7 @@
 
     function closeFaceModal() {
         if(state.stream) state.stream.getTracks().forEach(t => t.stop());
+        if(state.faceDetectionFrame) cancelAnimationFrame(state.faceDetectionFrame);
         state.stream = null; state.currentDescriptor = null;
         document.getElementById('modal-face').style.display = 'none';
         document.getElementById('btn-face-action').disabled = true;
@@ -1002,10 +1052,17 @@
     function handleSelectChange(val) { if (val === 'NEW_REGISTER') openRegister(); }
 
     async function openRegister() {
-        await loadModels();
+        if(!state.modelsLoaded) {
+            showLoading(true, "Menyiapkan AI...");
+            await loadModels();
+            showLoading(false);
+        }
         document.getElementById('modal-register').style.display = 'flex';
         const success = await getCameraStream('video-register');
-        if (success) { document.getElementById('reg-scanner-line').style.display = 'block'; detectFaceLoopRegister(); }
+        if (success) { 
+            document.getElementById('reg-scanner-line').style.display = 'block'; 
+            detectFaceLoopRegister(); 
+        }
     }
 
     async function detectFaceLoopRegister() {
@@ -1013,9 +1070,14 @@
         const btn = document.getElementById('btn-reg-save');
         const statusEl = document.getElementById('reg-status-text');
         const oval = document.getElementById('reg-oval');
-        if (!state.stream || !video) return;
-        const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+        
+        if (!state.stream || !video || video.paused) return;
+
+        const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 128, scoreThreshold: 0.5 }))
+                                    .withFaceLandmarks().withFaceDescriptor();
+
         const alignment = isFaceAligned(detection, video.videoWidth, video.videoHeight);
+        
         if (alignment.aligned) {
             state.currentDescriptor = detection.descriptor;
             oval.classList.remove('invalid'); oval.classList.add('valid');
@@ -1027,12 +1089,15 @@
             oval.classList.remove('valid'); if (detection) oval.classList.add('invalid');
             statusEl.innerText = alignment.status;
             statusEl.className = "text-[8px] text-center font-bold text-red-400 uppercase";
-            btn.disabled = true; setTimeout(detectFaceLoopRegister, 200);
+            btn.disabled = true; 
+            
+            state.faceDetectionFrame = requestAnimationFrame(detectFaceLoopRegister);
         }
     }
 
     function closeRegister() {
         if(state.stream) state.stream.getTracks().forEach(t => t.stop());
+        if(state.faceDetectionFrame) cancelAnimationFrame(state.faceDetectionFrame);
         state.stream = null; document.getElementById('modal-register').style.display = 'none';
         document.getElementById('select-user').value = "";
     }
@@ -1063,7 +1128,7 @@
         if (state.qrScannerRunning) return;
         state.qrScannerRunning = true;
         state.qrScanner = new Html5Qrcode("qr-reader");
-        state.qrScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
+        state.qrScanner.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, (txt) => {
             if (txt === state.data.config.QR_TEXT) {
                 if (state.isProcessing) return; 
                 if (state.currentLocation) {
@@ -1191,7 +1256,11 @@
         XLSX.writeFile(wb, `REKAP_GARDENA_${filterBulan}_${filterTahun}.xlsx`);
     }
 
+    /* --- OPTIMASI 4: WARM UP AI SAAT SPLASH --- */
     window.onload = async () => { 
+        // Mulai download model AI saat splash screen masih berjalan (Background loading)
+        loadModels(); 
+        
         await fetchData();
         setTimeout(() => {
             const splash = document.getElementById('splash-screen');
@@ -1213,7 +1282,7 @@
         }, 1000); 
     };
 
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=1778025830401');
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=1778025830402');
     function checkConnectionAndSync() {
         if (navigator.onLine) document.getElementById('offline-banner').style.display = 'none';
         else document.getElementById('offline-banner').style.display = 'block';

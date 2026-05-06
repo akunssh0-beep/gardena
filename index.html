@@ -304,6 +304,21 @@
             font-weight: 900;
             margin-bottom: 4px;
         }
+
+        /* --- SYNC BUTTON ANIMATION --- */
+        .btn-sync {
+            width: 32px; height: 32px;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(8px);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; border: 1px solid rgba(255,255,255,0.3);
+            cursor: pointer; color: white;
+            transition: 0.3s;
+        }
+        .btn-sync:active { transform: rotate(180deg); background: rgba(255,255,255,0.4); }
+        .spinning { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
 
     <meta name="theme-color" content="#10b981">
@@ -358,6 +373,9 @@
     <div class="scrollable-content">
         <div id="view-login" class="view-content active">
             <div class="pink-header anim-header p-6 pt-10 pb-16 rounded-b-[35px] text-white text-center">
+                <div class="absolute top-4 right-4">
+                    <button onclick="refreshData(this)" class="btn-sync">🔄</button>
+                </div>
                 <p class="text-[8px] font-bold opacity-60 uppercase mb-1">🏥 UPTD Puskesmas Sampanahan</p>
                 <h2 class="text-3xl font-black tracking-tighter">GARDENA</h2>
                 <p class="text-[9px] font-bold opacity-80 uppercase mt-1">Garda Terdepan Nakes Sampanahan</p>
@@ -405,7 +423,10 @@
                         </div>
                     </div>
                     <div class="flex flex-col items-end gap-2">
-                        <button onclick="openLogoutModal()" class="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 flex items-center justify-center relative z-10 shadow-lg">🚪</button>
+                        <div class="flex gap-2">
+                            <button onclick="refreshData(this)" class="btn-sync">🔄</button>
+                            <button onclick="openLogoutModal()" class="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 flex items-center justify-center relative z-10 shadow-lg">🚪</button>
+                        </div>
                         <p id="clock-display" class="text-lg font-black opacity-90 leading-none">00:00</p>
                     </div>
                 </div>
@@ -459,9 +480,12 @@
                         <h2 class="text-2xl font-black text-slate-800 uppercase tracking-tighter">Rekap Presensi</h2>
                         <p class="text-[10px] text-slate-400 font-bold uppercase mb-4">Riwayat Jaga Seluruh Petugas</p>
                     </div>
-                    <button onclick="downloadExcel()" class="bg-emerald-500 text-white p-3 rounded-xl text-[10px] font-bold shadow-lg flex items-center gap-2">
-                        📥 EXCEL
-                    </button>
+                    <div class="flex gap-2">
+                        <button onclick="refreshData(this)" class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center shadow-sm border border-slate-200">🔄</button>
+                        <button onclick="downloadExcel()" class="bg-emerald-500 text-white p-3 rounded-xl text-[10px] font-bold shadow-lg flex items-center gap-2">
+                            📥 EXCEL
+                        </button>
+                    </div>
                 </div>
 
                 <div class="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
@@ -589,7 +613,7 @@
         <div class="pink-header p-6 text-white text-center"><h3 class="font-black uppercase text-sm">Pendaftaran Petugas</h3></div>
         <div class="p-6 space-y-4">
             <input type="text" id="reg-nama" class="w-full p-4 bg-slate-50 border rounded-xl text-xs font-bold" placeholder="Nama Lengkap">
-            <input type="number" id="reg-nip" class="w-full p-4 bg-slate-50 border rounded-xl text-xs font-bold" placeholder="NIP (18 Digit)">
+            <input type="number" id="reg-nip" class="w-full p-4 bg-slate-50 border rounded-xl text-xs font-bold" placeholder="NIP (Bebas Angka)">
             <div class="scanner-container relative">
                 <div class="face-guide"><div id="reg-oval" class="face-oval"></div></div>
                 <div id="reg-scanner-line" class="scanning-line"></div>
@@ -632,10 +656,9 @@
         qrScannerRunning: false,
         geoWatchId: null,
         currentView: 'login',
-        isProcessing: false // UNTUK CEGAH DOUBLE LOG
+        isProcessing: false 
     };
 
-    // AUDIO UTILITY
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playTone(freq, type, duration, vol = 0.1) {
         const osc = audioCtx.createOscillator();
@@ -757,6 +780,21 @@
         } catch (e) { showAlert("Error AI", "Gagal memuat pengenal wajah."); showLoading(false); }
     }
 
+    // FUNGSI REFRESH BARU
+    async function refreshData(btn) {
+        if(btn) btn.classList.add('spinning');
+        try {
+            await fetchData();
+            soundSuccess();
+            showAlert("Berhasil", "Data disinkronkan ✨");
+        } catch(e) {
+            soundError();
+            showAlert("Gagal", "Gagal sinkron data.");
+        } finally {
+            if(btn) setTimeout(() => btn.classList.remove('spinning'), 500);
+        }
+    }
+
     function showView(viewName) {
         if (viewName === state.currentView) return;
         const viewOrder = ['login', 'profile', 'rekap'];
@@ -809,11 +847,8 @@
     function updateProfileInfo() {
         if (!state.user) return;
         document.getElementById('prof-name').innerText = state.user;
-        
         const officer = state.data.descriptors ? state.data.descriptors.find(d => d.name === state.user) : null;
-        if (officer && officer.nip) {
-            document.getElementById('prof-nip').innerText = `NIP. ${officer.nip}`;
-        }
+        if (officer && officer.nip) document.getElementById('prof-nip').innerText = `NIP. ${officer.nip}`;
     }
 
     function setFilterDefault() {
@@ -886,11 +921,7 @@
     async function startFaceAuth() {
         const val = document.getElementById('select-user').value;
         if (!val) return showAlert("Opps!", "Pilih nama dulu.");
-        if (val === 'NEW_REGISTER') {
-            soundError();
-            triggerHaptic("fail");
-            return showAlert("Sistem Terkunci", "Sistem sedang di lock, silahkan hubungi admin.");
-        }
+        if (val === 'NEW_REGISTER') return openRegister();
         await loadModels();
         document.getElementById('modal-face').style.display = 'flex';
         const success = await getCameraStream('video-preview');
@@ -968,14 +999,7 @@
         document.getElementById('login-oval').className = 'face-oval';
     }
 
-    function handleSelectChange(val) { 
-        if (val === 'NEW_REGISTER') {
-            soundError();
-            triggerHaptic("fail");
-            showAlert("Sistem Terkunci", "Sistem sedang di lock, silahkan hubungi admin.");
-            document.getElementById('select-user').value = "";
-        } 
-    }
+    function handleSelectChange(val) { if (val === 'NEW_REGISTER') openRegister(); }
 
     async function openRegister() {
         await loadModels();
@@ -1016,7 +1040,7 @@
     async function processRegister() {
         const nama = document.getElementById('reg-nama').value;
         const nip = document.getElementById('reg-nip').value;
-        if (!nama || nip.length !== 18) return showAlert("Gagal", "NIP 18 digit wajib!");
+        if (!nama || !nip) return showAlert("Gagal", "Nama dan NIP wajib diisi!");
         showLoading(true, "Mendaftarkan Wajah...");
         try {
             const descriptorStr = JSON.stringify(Array.from(state.currentDescriptor));
@@ -1041,15 +1065,10 @@
         state.qrScanner = new Html5Qrcode("qr-reader");
         state.qrScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
             if (txt === state.data.config.QR_TEXT) {
-                // LOCK JIKA SEDANG PROSES
                 if (state.isProcessing) return; 
-
                 if (state.currentLocation) {
                     const d = calculateDistance(state.currentLocation.coords.latitude, state.currentLocation.coords.longitude, TARGET_LOC.lat, TARGET_LOC.lng);
-                    if (d > TARGET_LOC.radius) {
-                        soundError(); triggerHaptic("fail");
-                        return showAlert("Luar Radius", `Terlalu jauh (${d}m)!`);
-                    }
+                    if (d > TARGET_LOC.radius) { soundError(); triggerHaptic("fail"); return showAlert("Luar Radius", `Terlalu jauh (${d}m)!`); }
                 }
                 processAttendance("QR"); 
                 closeScanModal();
@@ -1073,20 +1092,16 @@
         if (state.isProcessing) return;
         const ket = document.getElementById('dl-keterangan').value;
         if(!ket) return showAlert("Opps", "Isi keterangan!");
-        
         const todayStr = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Makassar' }).replace(/\./g, '/');
-        const myLogsToday = state.data.logs.filter(l => l.name === state.user && l.date === todayStr);
-        if (myLogsToday.length > 0) return showAlert("Ditolak", "Hari ini sudah ada riwayat absen!");
-        
+        if (state.data.logs.some(l => l.name === state.user && l.date === todayStr)) return showAlert("Ditolak", "Hari ini sudah ada riwayat absen!");
         navigator.geolocation.getCurrentPosition((pos) => { 
             state.currentLocation = pos; closeDLModal(); processAttendance("DL", ket); 
         }, () => { closeDLModal(); processAttendance("DL", ket); });
     }
 
     async function processAttendance(method, note = "-") {
-        if (state.isProcessing) return; // Mencegah double submit
-        state.isProcessing = true; // Kunci akses
-
+        if (state.isProcessing) return; 
+        state.isProcessing = true; 
         const now = new Date();
         const todayStr = now.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Makassar' }).replace(/\./g, '/');
         const myLogsToday = state.data.logs.filter(l => l.name === state.user && l.date === todayStr);
@@ -1098,28 +1113,11 @@
         if (method === "QR") {
             const hasMasuk = myLogsToday.some(l => l.type === "MASUK" || l.type === "DL");
             const hasPulang = myLogsToday.some(l => l.type === "PULANG");
-            
-            if (type === "MASUK" && hasMasuk) { 
-                state.isProcessing = false;
-                soundError(); triggerHaptic("fail"); 
-                return showAlert("Ditolak", "Anda sudah absen masuk hari ini!"); 
-            }
+            if (type === "MASUK" && hasMasuk) { state.isProcessing = false; soundError(); triggerHaptic("fail"); return showAlert("Ditolak", "Anda sudah absen masuk!"); }
             if (type === "PULANG") {
-                if (!hasMasuk) { 
-                    state.isProcessing = false;
-                    soundError(); triggerHaptic("fail"); 
-                    return showAlert("Ditolak", "Absen masuk belum ada!"); 
-                }
-                if (hasPulang) { 
-                    state.isProcessing = false;
-                    soundError(); triggerHaptic("fail"); 
-                    return showAlert("Ditolak", "Anda sudah absen pulang!"); 
-                }
-                if (myLogsToday.some(l => l.type === "DL")) { 
-                    state.isProcessing = false;
-                    soundError(); triggerHaptic("fail"); 
-                    return showAlert("Ditolak", "Petugas DL tidak perlu absen pulang!"); 
-                }
+                if (!hasMasuk) { state.isProcessing = false; soundError(); triggerHaptic("fail"); return showAlert("Ditolak", "Absen masuk belum ada!"); }
+                if (hasPulang) { state.isProcessing = false; soundError(); triggerHaptic("fail"); return showAlert("Ditolak", "Anda sudah absen pulang!"); }
+                if (myLogsToday.some(l => l.type === "DL")) { state.isProcessing = false; soundError(); triggerHaptic("fail"); return showAlert("Ditolak", "DL tidak perlu absen pulang!"); }
             }
         }
         
@@ -1136,12 +1134,8 @@
             soundSuccess(); triggerHaptic("success"); 
             showAlert("Berhasil", `${payload.type} Tercatat!`); 
             await fetchData(); 
-        } catch (err) { 
-            soundError(); triggerHaptic("fail"); 
-        } finally {
-            state.isProcessing = false; // Buka kunci setelah selesai
-            showLoading(false);
-        }
+        } catch (err) { soundError(); triggerHaptic("fail"); } 
+        finally { state.isProcessing = false; showLoading(false); }
     }
 
     function renderDailyLog() {
@@ -1208,42 +1202,25 @@
                 document.getElementById('view-profile').classList.add('active');
                 const nav = document.getElementById('main-nav');
                 const fab = document.getElementById('fab-scan-qr');
-                nav.classList.remove('hidden');
-                fab.classList.remove('hidden');
+                nav.classList.remove('hidden'); fab.classList.remove('hidden');
                 document.getElementById('nav-profile').classList.add('active');
-                updateProfileInfo();
-                startGeoMonitoring(); 
-                renderDailyLog(); 
-                updateDashboardStats();
+                updateProfileInfo(); startGeoMonitoring(); renderDailyLog(); updateDashboardStats();
             }
         }, 3000); 
         setInterval(() => {
-            const now = new Date();
             const clock = document.getElementById('clock-display');
-            if(clock) clock.innerText = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Makassar' }).replace('.', ':');
+            if(clock) clock.innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Makassar' }).replace('.', ':');
         }, 1000); 
     };
+
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=1778025830400');
+    function checkConnectionAndSync() {
+        if (navigator.onLine) document.getElementById('offline-banner').style.display = 'none';
+        else document.getElementById('offline-banner').style.display = 'block';
+    }
+    window.addEventListener('online', checkConnectionAndSync);
+    window.addEventListener('load', checkConnectionAndSync);
+    window.addEventListener('offline', () => document.getElementById('offline-banner').style.display='block');
 </script>
-
-    <script>
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js?v=1778025830400');
-      }
-
-      function checkConnectionAndSync() {
-        if (navigator.onLine) {
-          const queue = JSON.parse(localStorage.getItem('absensi_queue') || '[]');
-          if (queue.length > 0) {
-            document.getElementById('offline-banner').style.display = 'none';
-          }
-        } else {
-          document.getElementById('offline-banner').style.display = 'block';
-        }
-      }
-
-      window.addEventListener('online', checkConnectionAndSync);
-      window.addEventListener('load', checkConnectionAndSync);
-      window.addEventListener('offline', () => document.getElementById('offline-banner').style.display='block');
-    </script>
 </body>
 </html>

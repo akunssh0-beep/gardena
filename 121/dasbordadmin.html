@@ -294,17 +294,23 @@
         const hadirToday = logsToday.filter(l => l.type === 'MASUK' || l.type === 'DL').length;
         const hadirYesterday = logsYesterday.filter(l => l.type === 'MASUK' || l.type === 'DL').length;
         
-        // Rata-rata Jam Masuk
+                // Rata-rata Jam Masuk (FIX NaN:NaN)
         const masukTimes = logsToday.filter(l => l.type === 'MASUK').map(l => {
-            const t = formatTime(l.time).split(':');
+            const timeStr = formatTime(l.time);
+            if (!timeStr || timeStr === "--:--") return null;
+            const t = timeStr.split(':');
             return parseInt(t[0]) * 60 + parseInt(t[1]);
-        });
+        }).filter(t => t !== null); // Memastikan hanya data valid yang dihitung
         
+        const avgTimeEl = document.getElementById('avg-time-in');
         if (masukTimes.length > 0) {
             const avgMin = Math.round(masukTimes.reduce((a,b) => a+b) / masukTimes.length);
             const h = Math.floor(avgMin/60).toString().padStart(2,'0');
             const m = (avgMin%60).toString().padStart(2,'0');
-            document.getElementById('avg-time-in').innerText = `Rata-rata Masuk: ${h}:${m}`;
+            avgTimeEl.innerText = `Rata-rata Masuk: ${h}:${m}`;
+        } else {
+            // Jika belum ada yang absen masuk, tampilkan strip agar tidak NaN
+            avgTimeEl.innerText = `Rata-rata Masuk: --:--`;
         }
 
         // Statistik Persentase & Tren

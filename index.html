@@ -12,18 +12,56 @@
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
 
     <style>
-        :root { --primary: #db2777; --accent: #6366f1; --bg: #f1f5f9; --card-bg: #ffffff; --border-color: #e2e8f0; --text-main: #0f172a; --text-mute: #64748b; }
+        :root { 
+            --primary: #db2777; 
+            --accent: #6366f1; 
+            --bg: #f1f5f9; 
+            --card-bg: #ffffff; 
+            --border-color: #e2e8f0; 
+            --text-main: #0f172a; 
+            --text-mute: #64748b;
+            --sat: env(safe-area-inset-top);
+            --sar: env(safe-area-inset-right);
+            --sab: env(safe-area-inset-bottom);
+            --sal: env(safe-area-inset-left);
+        }
         .dark { --bg: #020617; --card-bg: #0f172a; --border-color: #1e293b; --text-main: #f8fafc; --text-mute: #94a3b8; }
-        * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; transition: 0.3s; }
-        body { background-color: var(--bg); height: 100dvh; margin: 0; display: flex; justify-content: center; overflow: hidden; }
+        
+        * { 
+            box-sizing: border-box; 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            transition: 0.3s;
+            /* Scrolling Fix & No-Select Optimization */
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+        }
+        
+        body { 
+            background-color: var(--bg); 
+            height: 100dvh; 
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+            overflow: hidden; 
+            overscroll-behavior-y: none;
+            touch-action: pan-x pan-y;
+            /* No-Select: Menghindari blok teks saat ditekan lama */
+            -webkit-user-select: none;
+            user-select: none;
+        }
         
         .app-container { 
             width: 100%; max-width: 500px; background: var(--card-bg); height: 100dvh; 
             display: flex; flex-direction: column; position: relative; 
             box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow: hidden;
+            padding-left: var(--sal);
+            padding-right: var(--sar);
         }
 
-        /* --- PAGE TRANSITION SYSTEM --- */
+        /* Scrolling Fix Khusus iOS/Safari */
+        body.platform-ios { -webkit-font-smoothing: antialiased; }
+        body.platform-ios .view-content { -webkit-overflow-scrolling: touch; }
+
         .scrollable-content { 
             flex: 1; position: relative; width: 100%; height: 100%;
             overflow: hidden;
@@ -32,11 +70,13 @@
         .view-content { 
             position: absolute; inset: 0; width: 100%; height: 100%;
             display: none; flex-direction: column; overflow-y: auto; 
-            padding-bottom: 120px; scrollbar-width: none;
+            padding-bottom: calc(120px + var(--sab)); scrollbar-width: none;
             background: var(--card-bg);
             animation-duration: 0.5s;
             animation-fill-mode: both;
             animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            /* Memperbaiki momentum scroll */
+            scroll-behavior: smooth;
         }
         .view-content::-webkit-scrollbar { display: none; }
         .view-content.active { display: flex; z-index: 10; }
@@ -51,7 +91,6 @@
         .slide-in-left { animation-name: slideInLeft; }
         .slide-out-right { animation-name: slideOutRight; }
 
-        /* --- SPLASH SCREEN STYLES --- */
         #splash-screen {
             position: fixed; inset: 0; background: #fff; z-index: 9999;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -79,7 +118,6 @@
             50% { transform: scale(1.2); opacity: 0.6; }
         }
 
-        /* --- MODERN LOADING BAR STYLES --- */
         .loading-wrapper {
             width: 140px;
             margin-top: 30px;
@@ -126,7 +164,6 @@
             40% { transform: scale(1); opacity: 1; }
         }
 
-        /* --- STAGGERED FADE-IN ANIMATIONS --- */
         .anim-header { animation: slideDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
         .anim-card { animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; animation-delay: 0.3s; opacity: 0; }
         .anim-btn { animation: bounceIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; animation-delay: 0.6s; opacity: 0; }
@@ -147,7 +184,9 @@
 
         .pink-header { 
             background: linear-gradient(135deg, #db2777 0%, #be185d 40%, #6366f1 100%); 
-            position: relative; overflow: hidden;
+            position: relative; 
+            overflow: hidden;
+            padding-top: calc(2.5rem + var(--sat));
         }
         .pink-header::before {
             content: ""; position: absolute; top: -20px; right: -20px; width: 120px; height: 120px;
@@ -158,11 +197,9 @@
             background: rgba(99, 102, 241, 0.2); border-radius: 50%; filter: blur(15px);
         }
 
-        /* --- MODALS & SCANNER --- */
         .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(6px); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 24px; }
-        .modal-card { background: var(--card-bg); width: 100%; max-width: 400px; border-radius: 28px; overflow: hidden; }
+        .modal-card { background: var(--card-bg); width: 100%; max-width: 400px; border-radius: 28px; overflow: hidden; margin-bottom: var(--sab); }
         
-        /* Z-INDEX FIX: Video di level hardware paling bawah, Guide di atasnya */
         .scanner-container { position: relative; width: 100%; aspect-ratio: 1/1; background: #000; border-radius: 20px; overflow: hidden; display: flex; align-items: center; justify-content: center; z-index: 1; }
         
         #video-preview, #video-register { position: absolute; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); border-radius: 20px; z-index: 5; }
@@ -185,18 +222,26 @@
         .corner-svg { width: 70%; height: 70%; stroke: white; stroke-width: 4; fill: none; opacity: 0.8; animation: pulse-border 2s infinite ease-in-out; }
         @keyframes pulse-border { 0%, 100% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.05); opacity: 1; } }
 
-        #custom-alert { position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-150%); width: 85%; max-width: 360px; background: var(--card-bg); z-index: 2000; padding: 18px 24px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 14px; transition: 0.4s; opacity: 0; border: 1px solid var(--border-color); }
+        #custom-alert { position: fixed; top: calc(24px + var(--sat)); left: 50%; transform: translateX(-50%) translateY(-150%); width: 85%; max-width: 360px; background: var(--card-bg); z-index: 2000; padding: 18px 24px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 14px; transition: 0.4s; opacity: 0; border: 1px solid var(--border-color); }
         #custom-alert.show { transform: translateX(-50%) translateY(0); opacity: 1; }
         
         .btn-primary { background: linear-gradient(135deg, #db2777, #6366f1); color: white; padding: 16px; border-radius: 18px; font-weight: 800; width: 100%; border: none; cursor: pointer; }
-        .btn-primary:disabled { opacity: 0.5; filter: grayscale(1); cursor: not-allowed; }
+        .btn-primary:active { transform: scale(0.97); opacity: 0.9; }
+        .btn-primary:disabled { opacity: 0.5; filter: grayscale(1); cursor: not-allowed; transform: none; }
+
         .btn-outline { border: 2px solid var(--border-color); color: var(--text-mute); padding: 12px; border-radius: 18px; font-weight: 800; width: 100%; margin-top: 10px; cursor: pointer; position: relative; overflow: hidden; }
         .btn-outline:active { background: var(--accent); color: white; border-color: var(--accent); transform: scale(0.96); }
 
-        /* --- UPDATED FLOATING ACTION BUTTON (FAB) --- */
+        /* Input Optimization: No zoom on iOS */
+        input, select, textarea { font-size: 16px !important; -webkit-user-select: text; user-select: text; }
+        .platform-ios input, .platform-ios select, .platform-ios textarea { 
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
         .fab-scan {
             position: absolute; 
-            bottom: 30px; 
+            bottom: calc(30px + var(--sab)); 
             left: 50%;
             transform: translateX(-50%);
             width: 72px; 
@@ -220,41 +265,34 @@
             border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 20px; padding: 12px; text-align: center; color: white;
         }
 
-        /* --- GHOST BUTTON --- */
         .ghost-btn-row {
             margin-top: 12px;
             width: 100%;
         }
-        .btn-ghost {
-            background: transparent;
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            padding: 8px 16px;
-            border-radius: 12px;
-            font-size: 9px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            width: 100%;
-            cursor: pointer;
-            backdrop-filter: blur(4px);
-        }
-        .btn-ghost:active {
+        .btn-ghost-info {
             background: rgba(255, 255, 255, 0.1);
-            transform: scale(0.98);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 10px;
+            border-radius: 16px;
+            width: 100%;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
         }
 
         .rekap-wrapper { width: 100%; overflow-x: auto; border-radius: 20px; }
         .rekap-table { width: 100%; border-collapse: collapse; font-size: 10px; min-width: 500px; }
         .rekap-table th { background: #f8fafc; padding: 12px 8px; text-align: left; border-bottom: 2px solid #e2e8f0; color: #64748b; font-weight: 800; text-transform: uppercase; white-space: nowrap; }
         .rekap-table td { padding: 12px 8px; border-bottom: 1px solid #f1f5f9; color: var(--text-main); font-weight: 600; white-space: nowrap; }
+        
+        .rekap-table tr.my-row { background-color: #fdf2f8; }
+        .rekap-table tr.my-row td:first-child { color: var(--primary); font-weight: 900; }
 
-        /* --- BOTTOM NAVIGATION --- */
         .dashboard-nav { 
             position: absolute; bottom: 0; left: 0; right: 0; 
             background: var(--card-bg); 
             border-top: 1px solid var(--border-color); 
-            padding: 10px 10px 25px 10px; 
+            padding: 10px 10px calc(20px + var(--sab)) 10px; 
             z-index: 100; 
             border-radius: 30px 30px 0 0; 
             box-shadow: 0 -10px 40px rgba(0,0,0,0.05); 
@@ -279,7 +317,6 @@
         
         .map-preview { width: 100%; height: 80px; border-radius: 16px; background-size: cover; background-position: center; margin-top: 4px; border: 1px solid #e2e8f0; }
 
-        /* --- BRANDING FOOTER --- */
         .app-footer {
             padding: 20px;
             text-align: center;
@@ -306,11 +343,11 @@
             margin-bottom: 4px;
         }
 
-        /* --- SYNC BUTTON ANIMATION --- */
         .btn-sync {
             width: 32px; height: 32px;
             background: rgba(255,255,255,0.2);
             backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             border-radius: 10px;
             display: flex; align-items: center; justify-content: center;
             font-size: 14px; border: 1px solid rgba(255,255,255,0.3);
@@ -323,16 +360,17 @@
     </style>
 
     <meta name="theme-color" content="#10b981">
-    <link rel="manifest" href="manifest.json?v=1778025830400">
+    <link rel="manifest" href="manifest.json">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="icon-192.png">
     <style>
-        #offline-banner { position:fixed; top:0; left:0; right:0; background:#ef4444; color:white; text-align:center; padding:5px; z-index:9999; font-weight:bold; display:none; }
+        #offline-banner { position:fixed; top:var(--sat); left:0; right:0; background:#ef4444; color:white; text-align:center; padding:5px; z-index:9999; font-weight:bold; display:none; font-size: 10px; }
     </style>
     <div id="offline-banner">MODE OFFLINE - DATA TERSIMPAN LOKAL</div>
 </head>
-<body>
+<body class="platform-detect">
 
 <div id="splash-screen">
     <div class="pulse-bg"></div>
@@ -373,8 +411,8 @@
 <div class="app-container">
     <div class="scrollable-content">
         <div id="view-login" class="view-content active">
-            <div class="pink-header anim-header p-6 pt-10 pb-16 rounded-b-[35px] text-white text-center">
-                <div class="absolute top-4 right-4">
+            <div class="pink-header anim-header p-6 pb-16 rounded-b-[35px] text-white text-center">
+                <div class="absolute right-4" style="top: calc(1rem + var(--sat));">
                     <button onclick="refreshData(this)" class="btn-sync">🔄</button>
                 </div>
                 <p class="text-[8px] font-bold opacity-60 uppercase mb-1">🏥 UPTD Puskesmas Sampanahan</p>
@@ -386,41 +424,34 @@
                     <h3 class="font-extrabold text-slate-800 text-sm mb-6 uppercase">Masuk ke Sistem 👋</h3>
                     <select id="select-user" class="w-full bg-slate-50 border p-4 rounded-xl text-xs font-bold mb-4" onchange="handleSelectChange(this.value)">
                         <option value="">-- Pilih Nama --</option>
-                        <option value="NEW_REGISTER" style="color:blue; font-weight:bold;">+ DAFTAR AKUN BARU</option>
                     </select>
                     <button id="btn-login-trigger" onclick="startFaceAuth()" class="btn-primary anim-btn text-xs uppercase w-full">Verifikasi & Masuk ✨</button>
                 </div>
             </div>
             <div class="app-footer anim-card" style="border:none; background:transparent;">
-                <span class="version-tag">VER 1.0.8</span>
+                <span class="version-tag">VER 1.1.2</span>
                 <p class="brand-text">
                     Adi.P Founder & Head of Developer<br>
-                    <span class="text-pink-600 font-black">BAROKAH DEV</span><br>
+                    <span id="trigger-admin" class="text-pink-600 font-black cursor-pointer select-none" onclick="handleAdminTrigger()">BAROKAH DEV</span><br>
                     <span class="text-[7px] opacity-50">(Part of PT. Internet Sejahtera Barokah)</span>
                 </p>
             </div>
         </div>
 
         <div id="view-profile" class="view-content">
-            <div class="pink-header p-6 pt-10 pb-10 text-white rounded-b-[40px]">
+            <div class="pink-header p-6 pb-10 text-white rounded-b-[45px] shadow-2xl">
                 <div class="flex justify-between items-start mb-6">
                     <div class="flex items-center gap-4 text-left">
-                        <div class="w-16 h-16 bg-white/20 backdrop-blur-md rounded-full border-2 border-white/40 flex items-center justify-center text-3xl shadow-inner overflow-hidden">
-                            <span id="prof-avatar">👩‍⚕️</span>
+                        <div class="relative">
+                            <div class="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl border-2 border-white/40 flex items-center justify-center text-3xl shadow-inner overflow-hidden">
+                                <span id="prof-avatar">👤</span>
+                            </div>
+                            <div class="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 border-2 border-white rounded-full flex items-center justify-center text-[10px] animate-pulse">✓</div>
                         </div>
                         <div class="relative z-10 flex flex-col justify-center">
-                            <h2 id="prof-name" class="text-lg font-black uppercase leading-tight tracking-tight">PETUGAS</h2>
-                            <p id="prof-nip" class="text-[10px] font-bold text-slate-300 tracking-wider mb-1 uppercase">NIP. -</p>
-                            <div class="flex flex-col gap-0.5">
-                                <div class="flex items-center gap-1">
-                                    <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
-                                    <p class="text-[8px] font-bold opacity-90 tracking-wide uppercase">Penugasan Khusus PKM</p>
-                                </div>
-                                <div id="profile-gps-status" class="flex items-center gap-1.5 bg-black/20 px-2 py-0.5 rounded-full w-fit">
-                                    <span id="profile-gps-dot" class="w-1.5 h-1.5 bg-slate-400 rounded-full"></span>
-                                    <p id="profile-gps-text" class="text-[6px] font-black tracking-widest uppercase">Mendeteksi Lokasi...</p>
-                                </div>
-                            </div>
+                            <p class="text-[9px] font-black uppercase opacity-60 tracking-widest">Selamat Bertugas,</p>
+                            <h2 id="prof-name" class="text-xl font-black uppercase leading-tight tracking-tight">PETUGAS</h2>
+                            <p id="prof-nip" class="text-[10px] font-bold text-white/60 tracking-wider mt-0.5 uppercase">NIP. -</p>
                         </div>
                     </div>
                     <div class="flex flex-col items-end gap-2">
@@ -428,87 +459,149 @@
                             <button onclick="refreshData(this)" class="btn-sync">🔄</button>
                             <button onclick="openLogoutModal()" class="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 flex items-center justify-center relative z-10 shadow-lg">🚪</button>
                         </div>
-                        <p id="clock-display" class="text-lg font-black opacity-90 leading-none">00:00</p>
+                        <div class="bg-black/20 backdrop-blur-md px-3 py-1 rounded-lg">
+                            <p id="clock-display" class="text-sm font-black opacity-90 leading-none">00:00</p>
+                        </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3 relative z-10">
-                    <div class="glass-card">
-                        <p class="text-[7px] font-black uppercase opacity-70 tracking-widest mb-1">Kehadiran</p>
-                        <h4 id="stat-hadir" class="text-xl font-black">0</h4>
-                        <p class="text-[7px] font-bold opacity-60">HARI MASUK</p>
+                <div class="grid grid-cols-2 gap-4 relative z-10 px-1">
+                    <div class="glass-card flex flex-col items-center justify-center py-4">
+                        <div class="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center mb-2">🗓️</div>
+                        <p class="text-[8px] font-black uppercase opacity-70 tracking-widest mb-1">Kehadiran</p>
+                        <h4 id="stat-hadir" class="text-2xl font-black">0</h4>
+                        <p class="text-[7px] font-bold opacity-60 uppercase">HARI KERJA</p>
                     </div>
-                    <div class="glass-card">
-                        <p class="text-[7px] font-black uppercase opacity-70 tracking-widest mb-1">Dinas Luar</p>
-                        <h4 id="stat-dl" class="text-xl font-black">0</h4>
-                        <p class="text-[7px] font-bold opacity-60">FREKUENSI DL</p>
+                    <div class="glass-card flex flex-col items-center justify-center py-4">
+                        <div class="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center mb-2">🚀</div>
+                        <p class="text-[8px] font-black uppercase opacity-70 tracking-widest mb-1">Dinas Luar</p>
+                        <h4 id="stat-dl" class="text-2xl font-black">0</h4>
+                        <p class="text-[7px] font-bold opacity-60 uppercase">FREKUENSI DL</p>
                     </div>
                 </div>
 
-                <div class="ghost-btn-row relative z-10">
-                    <button onclick="showAlert('Info', 'Fitur Riwayat Detail Segera Hadir')" class="btn-ghost">
-                        Lihat Rincian Tugas 📄
-                    </button>
+                <div class="ghost-btn-row relative z-10 px-1">
+                    <div class="btn-ghost-info border-none bg-white/10 shadow-xl">
+                        <div class="flex justify-around text-center border-b border-white/10 pb-3 mb-3">
+                            <div class="group">
+                                <p class="text-[7px] font-black uppercase opacity-60 mb-1">Waktu Masuk</p>
+                                <div class="flex items-center gap-1 justify-center">
+                                    <span class="text-[10px]">🟢</span>
+                                    <p id="info-jam-masuk" class="text-sm font-black">--:--</p>
+                                </div>
+                            </div>
+                            <div class="w-px bg-white/10 h-8 my-auto"></div>
+                            <div class="group">
+                                <p class="text-[7px] font-black uppercase opacity-60 mb-1">Waktu Pulang</p>
+                                <div class="flex items-center gap-1 justify-center">
+                                    <span class="text-[10px]">🔴</span>
+                                    <p id="info-jam-pulang" class="text-sm font-black">--:--</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-center gap-2">
+                            <div class="h-1.5 w-1.5 bg-emerald-400 rounded-full animate-ping"></div>
+                            <p id="info-status-ket" class="text-[9px] font-black uppercase text-center opacity-90 tracking-[0.1em]">SISTEM SIAP DIGUNAKAN</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="px-6 space-y-6 mt-6 pb-20">
-                <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Log Hari Ini</h3>
-                    <div id="daily-log-container"></div>
+            <div class="px-6 space-y-6 mt-8">
+                <div id="profile-gps-status" class="flex items-center justify-between bg-white border border-slate-100 p-4 rounded-[24px] shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-lg shadow-inner">📍</div>
+                        <div>
+                            <p class="text-[7px] font-black text-slate-400 uppercase tracking-widest">Status Lokasi</p>
+                            <p id="profile-gps-text" class="text-[10px] font-black text-slate-600 uppercase">Mendeteksi GPS...</p>
+                        </div>
+                    </div>
+                    <span id="profile-gps-dot" class="w-3 h-3 bg-slate-300 rounded-full shadow-lg"></span>
                 </div>
 
-                <div class="grid grid-cols-1 gap-4">
-                    <button onclick="openDLModal()" class="btn-outline flex items-center justify-center gap-3">
-                        <span class="text-xl">🚗</span> DINAS LUAR (DL)
+                <div class="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                        <span class="text-6xl">📝</span>
+                    </div>
+                    <div class="flex items-center justify-between mb-5">
+                        <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Log Aktivitas Hari Ini</h3>
+                        <span class="text-[8px] font-bold bg-pink-50 text-pink-500 px-2 py-1 rounded-lg uppercase">Real-time</span>
+                    </div>
+                    <div id="daily-log-container" class="space-y-3"></div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 pb-10">
+                    <button onclick="openDLModal()" class="group relative overflow-hidden bg-slate-50 hover:bg-slate-100 border-2 border-dashed border-slate-200 color-slate-600 p-5 rounded-[24px] font-black text-[11px] uppercase tracking-widest transition-all">
+                        <div class="flex items-center justify-center gap-3">
+                            <span class="text-xl group-hover:scale-110 transition-transform">💼</span>
+                            INPUT DINAS LUAR (DL)
+                        </div>
                     </button>
                 </div>
 
-                <div class="app-footer" style="border:none; padding-bottom: 40px;">
-                    <span class="version-tag">VER 1.0.8</span>
+                <div class="app-footer" style="border:none; padding-bottom: 40px; background:transparent;">
+                    <span class="version-tag">VER 1.1.2</span>
                     <p class="brand-text">
                         Adi.P Founder & Head of Developer<br>
-                        BAROKAH DEV
+                        <span class="text-pink-600 font-black tracking-widest">BAROKAH DEV</span>
                     </p>
                 </div>
             </div>
         </div>
 
         <div id="view-rekap" class="view-content">
-            <div class="p-8 pt-14">
+            <div class="p-8" style="padding-top: calc(2.5rem + var(--sat));">
                 <div class="flex justify-between items-start mb-2">
                     <div>
                         <h2 class="text-2xl font-black text-slate-800 uppercase tracking-tighter">Rekap Presensi</h2>
-                        <p class="text-[10px] text-slate-400 font-bold uppercase mb-4">Riwayat Jaga Seluruh Petugas</p>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase mb-4">Riwayat Absen Seluruh Petugas</p>
                     </div>
                     <div class="flex gap-2">
                         <button onclick="refreshData(this)" class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center shadow-sm border border-slate-200">🔄</button>
                         <button onclick="downloadExcel()" class="bg-emerald-500 text-white p-3 rounded-xl text-[10px] font-bold shadow-lg flex items-center gap-2">
-                            📥 EXCEL
+                            EXCEL
                         </button>
                     </div>
                 </div>
 
-                <div class="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
-                    <select id="filter-bulan" onchange="renderRekap()" class="w-full bg-white border border-slate-200 p-3 rounded-xl text-[11px] font-bold text-slate-700 outline-none">
-                        <option value="01">JANUARI</option>
-                        <option value="02">FEBRUARI</option>
-                        <option value="03">MARET</option>
-                        <option value="04">APRIL</option>
-                        <option value="05">MEI</option>
-                        <option value="06">JUNI</option>
-                        <option value="07">JULI</option>
-                        <option value="08">AGUSTUS</option>
-                        <option value="09">SEPTEMBER</option>
-                        <option value="10">OKTOBER</option>
-                        <option value="11">NOVEMBER</option>
-                        <option value="12">DESEMBER</option>
-                    </select>
-                    <select id="filter-tahun" onchange="renderRekap()" class="bg-white border border-slate-200 p-3 rounded-xl text-[11px] font-bold text-slate-700 outline-none">
-                        <option value="2024">2024</option>
-                        <option value="2025">2025</option>
-                        <option value="2026">2026</option>
-                    </select>
+                <div class="space-y-2 mb-6">
+                    <div class="grid grid-cols-2 gap-2">
+                        <select id="filter-bulan" onchange="handleFilterChange('month')" class="bg-white border border-slate-200 p-3 rounded-xl text-[11px] font-bold text-slate-700 outline-none">
+                            <option value="01">JANUARI</option>
+                            <option value="02">FEBRUARI</option>
+                            <option value="03">MARET</option>
+                            <option value="04">APRIL</option>
+                            <option value="05">MEI</option>
+                            <option value="06">JUNI</option>
+                            <option value="07">JULI</option>
+                            <option value="08">AGUSTUS</option>
+                            <option value="09">SEPTEMBER</option>
+                            <option value="10">OKTOBER</option>
+                            <option value="11">NOVEMBER</option>
+                            <option value="12">DESEMBER</option>
+                        </select>
+                        <select id="filter-tahun" onchange="handleFilterChange('year')" class="bg-white border border-slate-200 p-3 rounded-xl text-[11px] font-bold text-slate-700 outline-none">
+                            <option value="2024">2024</option>
+                            <option value="2025">2025</option>
+                            <option value="2026">2026</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="flex items-center bg-white border border-slate-200 p-2 rounded-xl">
+                            <input type="date" id="filter-tanggal" onchange="handleFilterChange('date')" class="w-full bg-transparent text-[11px] font-bold text-slate-700 outline-none">
+                        </div>
+                        <select id="filter-status" onchange="renderRekap()" class="bg-white border border-slate-200 p-3 rounded-xl text-[11px] font-bold text-slate-700 outline-none">
+                            <option value="SEMUA">-- STATUS --</option>
+                            <option value="HADIR">HADIR</option>
+                            <option value="DL">DINAS LUAR</option>
+                            <option value="TERLAMBAT">TERLAMBAT</option>
+                        </select>
+                    </div>
+                    <div class="relative">
+                        <input type="text" id="search-nama" oninput="renderRekap()" placeholder="Cari Nama Petugas..." class="w-full bg-slate-50 border border-slate-200 p-3 pl-10 rounded-xl text-[11px] font-bold outline-none focus:border-pink-400">
+                        <span class="absolute left-3 top-3">🔍</span>
+                        <button onclick="clearAllFilters()" class="absolute right-3 top-3 text-[10px] font-bold text-red-400 uppercase">Reset</button>
+                    </div>
                 </div>
 
                 <div class="rekap-wrapper bg-white border border-slate-100 shadow-sm">
@@ -526,7 +619,7 @@
                 </div>
 
                 <div class="app-footer" style="border:none; padding-bottom: 40px; background: transparent;">
-                    <span class="version-tag">VER 1.0.8</span>
+                    <span class="version-tag">VER 1.1.2</span>
                     <p class="brand-text">Adi.P - Barokah Dev</p>
                 </div>
             </div>
@@ -550,6 +643,23 @@
     </nav>
 </div>
 
+<div id="modal-admin-login" class="modal-overlay">
+    <div class="modal-card">
+        <div class="pink-header p-6 text-white text-center">
+            <h3 class="font-black uppercase text-sm">Login Administrator</h3>
+        </div>
+        <div class="p-8 space-y-6">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-pink-50 text-pink-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-2">🔐</div>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Masukkan PIN Akses</p>
+            </div>
+            <input type="password" id="admin-pin" inputmode="numeric" pattern="[0-9]*" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-center text-2xl font-black tracking-[1em] outline-none focus:border-pink-500 transition-all" placeholder="••••••">
+            <button onclick="processAdminLogin()" class="btn-primary text-xs uppercase w-full">Buka Rekapitulasi 🔓</button>
+            <button onclick="closeAdminLogin()" class="w-full text-[9px] font-bold text-slate-400 uppercase tracking-widest">Batal</button>
+        </div>
+    </div>
+</div>
+
 <div id="modal-scan" class="modal-overlay">
     <div class="modal-card">
         <div class="pink-header p-6 text-white text-center"><h3 class="font-black uppercase text-sm">Scan QR Puskesmas</h3></div>
@@ -564,7 +674,7 @@
                     </svg>
                 </div>
             </div>
-            <div id="geo-info">
+            <div id="geo-info" style="padding:16px;">
                 <div class="flex items-center gap-3 w-full justify-center">
                     <div id="signal-bars" class="signal-container">
                         <div class="signal-bar h-2"></div>
@@ -587,7 +697,7 @@
         <div class="pink-header p-6 text-white text-center"><h3 class="font-black uppercase text-sm">Input Dinas Luar</h3></div>
         <div class="p-6 space-y-4">
             <textarea id="dl-keterangan" class="w-full p-4 bg-slate-50 border rounded-xl text-xs font-bold" rows="3" placeholder="Keterangan Dinas Luar..."></textarea>
-            <button onclick="processDL()" class="btn-primary text-[10px]">KIRIM PRESENSI DL</button>
+            <button id="btn-dl-submit" onclick="processDL()" class="btn-primary text-[10px]">KIRIM PRESENSI DL</button>
             <button onclick="closeDLModal()" class="w-full text-[9px] font-bold text-slate-400 uppercase">Batal</button>
         </div>
     </div>
@@ -614,7 +724,7 @@
         <div class="pink-header p-6 text-white text-center"><h3 class="font-black uppercase text-sm">Pendaftaran Petugas</h3></div>
         <div class="p-6 space-y-4">
             <input type="text" id="reg-nama" class="w-full p-4 bg-slate-50 border rounded-xl text-xs font-bold" placeholder="Nama Lengkap">
-            <input type="number" id="reg-nip" class="w-full p-4 bg-slate-50 border rounded-xl text-xs font-bold" placeholder="NIP (Bebas Angka)">
+            <input type="number" id="reg-nip" inputmode="numeric" class="w-full p-4 bg-slate-50 border rounded-xl text-xs font-bold" placeholder="NIP (Bebas Angka)">
             <div class="scanner-container relative">
                 <div class="face-guide" style="z-index: 20;"><div id="reg-oval" class="face-oval"></div></div>
                 <div id="reg-scanner-line" class="scanning-line" style="z-index: 21;"></div>
@@ -643,8 +753,9 @@
 </div>
 
 <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyodVwWDRpMBD-0WV2Mib9oGZKEcf3eiLtS6VE193qGT93HAvmenp_Lgl98i8bywrWA/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbya9Unun4FbOiyW7jvJSHqfTlxy99FcLPeg8vQQ2FQSKgQxhL-zwEr_qvFyd2IVLWXf/exec";
     const TARGET_LOC = { lat: -2.637013, lng: 116.203609, radius: 100 }; 
+    const ADMIN_PASSWORD = "pkm12345"; 
 
     let state = { 
         user: localStorage.getItem('gardena_user') || null, 
@@ -658,7 +769,15 @@
         geoWatchId: null,
         currentView: 'login',
         isProcessing: false,
-        faceDetectionFrame: null // Untuk manajemen RequestAnimationFrame
+        faceDetectionFrame: null,
+        adminTriggerCount: 0,
+        adminModeEnabled: false
+    };
+
+    const detectPlatform = () => {
+        const ua = navigator.userAgent;
+        if (/iPad|iPhone|iPod/.test(ua)) { document.body.classList.add('platform-ios'); } 
+        else if (/Android/.test(ua)) { document.body.classList.add('platform-android'); }
     };
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -677,6 +796,15 @@
     function soundSuccess() { playTone(523.25, 'sine', 0.2); setTimeout(() => playTone(659.25, 'sine', 0.3), 100); }
     function soundError() { playTone(220, 'sawtooth', 0.3, 0.05); setTimeout(() => playTone(196, 'sawtooth', 0.4, 0.05), 150); }
 
+    // Haptic Feedback Helper
+    function triggerHaptic(type = "confirm") {
+        if ("vibrate" in navigator) {
+            if (type === "success") navigator.vibrate(50);
+            else if (type === "error") navigator.vibrate([100, 50, 100]);
+            else if (type === "confirm") navigator.vibrate(20);
+        }
+    }
+
     function formatTimeFix(rawTime) {
         if (!rawTime) return "-";
         try {
@@ -687,14 +815,6 @@
             }
         } catch (e) {}
         return rawTime;
-    }
-
-    function triggerHaptic(type = "error") {
-        if ("vibrate" in navigator) {
-            if (type === "success") navigator.vibrate(50);
-            else if (type === "fail") navigator.vibrate([100, 50, 100]);
-            else if (type === "confirm") navigator.vibrate(30);
-        }
     }
 
     function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -716,12 +836,12 @@
             if (profText) {
                 if (dist <= TARGET_LOC.radius) {
                     profText.innerText = "Area Puskesmas ✅";
-                    profText.className = "text-[6px] font-black tracking-widest uppercase text-emerald-400";
-                    profDot.className = "w-1.5 h-1.5 bg-emerald-400 rounded-full";
+                    profText.className = "text-[10px] font-black tracking-widest uppercase text-emerald-500";
+                    profDot.className = "w-3 h-3 bg-emerald-400 rounded-full shadow-[0_0_10px_#34d399]";
                 } else {
                     profText.innerText = "Luar Puskesmas ⚠️";
-                    profText.className = "text-[6px] font-black tracking-widest uppercase text-red-400";
-                    profDot.className = "w-1.5 h-1.5 bg-red-500 rounded-full";
+                    profText.className = "text-[10px] font-black tracking-widest uppercase text-red-400";
+                    profDot.className = "w-3 h-3 bg-red-500 rounded-full";
                 }
             }
             if (document.getElementById('modal-scan').style.display === 'flex') updateGeoUI(pos);
@@ -761,6 +881,7 @@
         document.getElementById('alert-msg').innerText = msg;
         const alert = document.getElementById('custom-alert');
         alert.classList.add('show');
+        triggerHaptic(title === "Gagal" ? "error" : "confirm");
         setTimeout(() => alert.classList.remove('show'), 4000);
     }
 
@@ -769,26 +890,21 @@
         document.getElementById('loading-overlay').classList.toggle('hidden', !show); 
     }
 
-    /* --- OPTIMASI 1: LOAD MODELS PARALEL --- */
     async function loadModels() {
         if (state.modelsLoaded) return;
         try {
             const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
-            // Gunakan Promise.all agar download model berjalan berbarengan (lebih cepat)
             await Promise.all([
                 faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
                 faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
                 faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
             ]);
             state.modelsLoaded = true;
-            console.log("AI Models Loaded Successfully");
-        } catch (e) { 
-            console.error("AI Load Error:", e);
-        }
+        } catch (e) { console.error("AI Load Error:", e); }
     }
 
-    // FUNGSI REFRESH BARU
     async function refreshData(btn) {
+        triggerHaptic("confirm");
         if(btn) btn.classList.add('spinning');
         try {
             await fetchData();
@@ -804,6 +920,7 @@
 
     function showView(viewName) {
         if (viewName === state.currentView) return;
+        triggerHaptic("confirm");
         const viewOrder = ['login', 'profile', 'rekap'];
         const oldIdx = viewOrder.indexOf(state.currentView);
         const newIdx = viewOrder.indexOf(viewName);
@@ -856,6 +973,9 @@
         document.getElementById('prof-name').innerText = state.user;
         const officer = state.data.descriptors ? state.data.descriptors.find(d => d.name === state.user) : null;
         if (officer && officer.nip) document.getElementById('prof-nip').innerText = `NIP. ${officer.nip}`;
+        
+        const avatar = document.getElementById('prof-avatar');
+        if(avatar) avatar.innerText = state.user.charAt(0).toUpperCase();
     }
 
     function setFilterDefault() {
@@ -864,6 +984,9 @@
         const tahun = now.getFullYear().toString();
         document.getElementById('filter-bulan').value = bulan;
         document.getElementById('filter-tahun').value = tahun;
+        document.getElementById('filter-tanggal').value = "";
+        document.getElementById('search-nama').value = "";
+        document.getElementById('filter-status').value = "SEMUA";
     }
 
     async function callGAS(method, args = []) {
@@ -874,15 +997,44 @@
         } catch (e) { showAlert("Error", "Gagal koneksi server."); throw e; }
     }
 
+    function handleAdminTrigger() {
+        state.adminTriggerCount++;
+        triggerHaptic("confirm");
+        if (state.adminTriggerCount >= 3) {
+            state.adminModeEnabled = !state.adminModeEnabled; 
+            state.adminTriggerCount = 0;
+            soundSuccess();
+            if (state.adminModeEnabled) {
+                showAlert("Sistem Terbuka", "Opsi Admin & Daftar Baru diaktifkan ✨");
+            } else {
+                showAlert("Sistem Terkunci", "Opsi Admin & Daftar Baru disembunyikan 🔒");
+            }
+            renderUserSelect();
+        }
+    }
+
+    function renderUserSelect() {
+        const sel = document.getElementById('select-user');
+        if(!sel) return;
+        
+        let html = '<option value="">-- Pilih Nama --</option>';
+        if (state.adminModeEnabled) {
+            html += '<option value="ADMIN" style="color:#db2777; font-weight:bold;">🛠️ ADMIN SISTEM</option>';
+            html += '<option value="NEW_REGISTER" style="color:blue; font-weight:bold;">+ DAFTAR AKUN BARU</option>';
+        }
+        
+        if (state.data && state.data.officers) {
+            html += state.data.officers.map(o => `<option value="${o}">${o}</option>`).join('');
+        }
+        
+        sel.innerHTML = html;
+    }
+
     async function fetchData() {
         try {
             const res = await callGAS('getData');
             state.data = res;
-            const sel = document.getElementById('select-user');
-            if(sel) {
-                sel.innerHTML = '<option value="">-- Pilih Nama --</option><option value="NEW_REGISTER" style="color:blue; font-weight:bold;">+ DAFTAR AKUN BARU</option>' + 
-                    res.officers.map(o => `<option value="${o}">${o}</option>`).join('');
-            }
+            renderUserSelect();
             if(state.user) { updateDashboardStats(); renderDailyLog(); renderRekap(); updateProfileInfo(); }
         } catch (e) { console.error(e); }
     }
@@ -890,8 +1042,8 @@
     function updateDashboardStats() {
         if (!state.user) return;
         const now = new Date();
-        const currentMonth = now.toLocaleDateString('id-ID', { month: '2-digit', timeZone: 'Asia/Makassar' });
-        const currentYear = now.toLocaleDateString('id-ID', { year: 'numeric', timeZone: 'Asia/Makassar' });
+        const currentMonth = (now.getMonth() + 1).toString().padStart(2, '0');
+        const currentYear = now.getFullYear().toString();
         const myLogs = state.data.logs.filter(l => {
             const p = l.date.split('/');
             return l.name === state.user && p[1] === currentMonth && p[2] === currentYear;
@@ -902,32 +1054,15 @@
         document.getElementById('stat-dl').innerText = dlFreq;
     }
 
-    /* --- OPTIMASI 2: GET CAMERA STREAM LOW-RES --- */
     async function getCameraStream(targetId) {
         try {
-            // Gunakan ideal resolution yang pas untuk mobile (480p) agar loading kamera cepat
-            const constraints = { 
-                video: { 
-                    facingMode: "user", 
-                    width: { ideal: 480 }, 
-                    height: { ideal: 640 },
-                    frameRate: { ideal: 24 }
-                } 
-            };
+            const constraints = { video: { facingMode: "user", width: { ideal: 480 }, height: { ideal: 640 } } };
             if(state.stream) state.stream.getTracks().forEach(t => t.stop());
             state.stream = await navigator.mediaDevices.getUserMedia(constraints);
             const videoEl = document.getElementById(targetId);
             videoEl.srcObject = state.stream;
-            return new Promise((resolve) => { 
-                videoEl.onloadedmetadata = () => {
-                    videoEl.play();
-                    resolve(true); 
-                };
-            });
-        } catch (err) { 
-            showAlert("Gagal Kamera", "Izin kamera ditolak."); 
-            return false; 
-        }
+            return new Promise((resolve) => { videoEl.onloadedmetadata = () => { videoEl.play(); resolve(true); }; });
+        } catch (err) { showAlert("Gagal Kamera", "Izin kamera ditolak."); return false; }
     }
 
     function isFaceAligned(detection, videoWidth, videoHeight) {
@@ -935,7 +1070,6 @@
         const { x, y, width, height } = detection.detection.box;
         const centerX = x + width / 2;
         const centerY = y + height / 2;
-        // Penyesuaian center area
         const isCentered = (centerX > videoWidth * 0.25 && centerX < videoWidth * 0.75) && (centerY > videoHeight * 0.25 && centerY < videoHeight * 0.75);
         if (!isCentered) return { aligned: false, status: "POSISIKAN WAJAH DI TENGAH" };
         if (width < videoWidth * 0.3) return { aligned: false, status: "WAJAH TERLALU JAUH" };
@@ -944,73 +1078,88 @@
     }
 
     async function startFaceAuth() {
+        triggerHaptic("confirm");
         const val = document.getElementById('select-user').value;
         if (!val) return showAlert("Opps!", "Pilih nama dulu.");
         if (val === 'NEW_REGISTER') return openRegister();
+        if (val === 'ADMIN') return openAdminLogin();
         
-        // Memastikan model siap
-        if(!state.modelsLoaded) {
-            showLoading(true, "Menyiapkan AI...");
-            await loadModels();
-            showLoading(false);
-        }
-
+        if(!state.modelsLoaded) { showLoading(true, "Menyiapkan AI..."); await loadModels(); showLoading(false); }
         document.getElementById('modal-face').style.display = 'flex';
         const success = await getCameraStream('video-preview');
         if (!success) return closeFaceModal();
         document.getElementById('face-scanner-line').style.display = 'block';
-        
-        // Mulai loop deteksi
         detectFaceLoop();
     }
 
-    /* --- OPTIMASI 3: DETEKSI DENGAN REQUEST ANIMATION FRAME --- */
+    function openAdminLogin() {
+        document.getElementById('modal-admin-login').style.display = 'flex';
+        document.getElementById('admin-pin').value = "";
+        document.getElementById('admin-pin').focus();
+    }
+
+    function closeAdminLogin() {
+        document.getElementById('modal-admin-login').style.display = 'none';
+        document.getElementById('select-user').value = "";
+    }
+
+    function processAdminLogin() {
+        const pin = document.getElementById('admin-pin').value;
+        if (pin === ADMIN_PASSWORD) {
+            soundSuccess();
+            triggerHaptic("success");
+            state.user = "ADMIN";
+            localStorage.setItem('gardena_user', 'ADMIN');
+            document.getElementById('modal-admin-login').style.display = 'none';
+            showView('rekap'); 
+            showAlert("Berhasil", "Selamat Datang Admin ✨");
+        } else {
+            soundError();
+            triggerHaptic("error");
+            showAlert("Ditolak", "PIN Admin Salah!");
+            document.getElementById('admin-pin').value = "";
+        }
+    }
+
     async function detectFaceLoop() {
         const video = document.getElementById('video-preview');
         const btn = document.getElementById('btn-face-action');
         const statusEl = document.getElementById('face-status-text');
         const oval = document.getElementById('login-oval');
-        
         if (!state.stream || !video || video.paused) return;
-
-        // Gunakan inputSize kecil (128) untuk deteksi super cepat pada mobile
         const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 128, scoreThreshold: 0.5 }))
                                     .withFaceLandmarks().withFaceDescriptor();
-
         const alignment = isFaceAligned(detection, video.videoWidth, video.videoHeight);
-        
         if (alignment.aligned) {
             state.currentDescriptor = detection.descriptor;
-            oval.classList.remove('invalid'); oval.classList.add('valid');
+            oval.classList.add('valid');
             statusEl.innerText = alignment.status;
             statusEl.className = "text-[8px] text-center mt-4 font-bold text-emerald-500 uppercase";
             btn.disabled = false; btn.innerText = "VERIFIKASI & MASUK";
-            triggerHaptic("confirm"); 
-            // Loop berhenti sementara setelah posisi valid ditemukan
-            state.faceDetectionFrame = null;
         } else {
             oval.classList.remove('valid'); if (detection) oval.classList.add('invalid');
             statusEl.innerText = alignment.status;
             statusEl.className = "text-[8px] text-center mt-4 font-bold text-red-400 uppercase";
             btn.disabled = true; btn.innerText = "MENUNGGU WAJAH...";
-            
-            // Lanjut ke frame berikutnya
             state.faceDetectionFrame = requestAnimationFrame(detectFaceLoop);
         }
     }
 
-    /* --- UPDATE: THRESHOLD SET TO 0.5 --- */
     async function confirmFaceAuth() {
+        triggerHaptic("confirm");
+        const btn = document.getElementById('btn-face-action');
+        btn.disabled = true;
+        btn.innerText = "MEMPROSES...";
+
         const selectedUser = document.getElementById('select-user').value;
         const officerData = state.data.descriptors ? state.data.descriptors.find(d => d.name === selectedUser) : null;
         if (!officerData) { 
-            soundError(); triggerHaptic("fail");
+            soundError(); triggerHaptic("error");
             showAlert("Belum Terdaftar", "Data wajah tidak ditemukan."); 
             return closeFaceModal(); 
         }
         try {
             const savedDescriptor = new Float32Array(JSON.parse(officerData.descriptor));
-            // Perubahan nilai FaceMatcher menjadi 0.5 untuk akurasi yang lebih optimal
             const faceMatcher = new faceapi.FaceMatcher(savedDescriptor, 0.5);
             const match = faceMatcher.findBestMatch(state.currentDescriptor);
             if (match.label !== 'unknown') {
@@ -1021,23 +1170,26 @@
                 setTimeout(() => showView('profile'), 300);
                 showAlert("Berhasil", "Selamat datang, " + selectedUser);
             } else { 
-                soundError(); triggerHaptic("fail");
+                soundError(); triggerHaptic("error");
                 showAlert("Gagal Verifikasi", "Wajah tidak cocok!"); 
-                // Restart deteksi jika gagal
+                btn.disabled = false; btn.innerText = "VERIFIKASI & MASUK";
                 detectFaceLoop();
             }
-        } catch (e) { soundError(); showAlert("Error", "Gagal memproses verifikasi."); }
+        } catch (e) { soundError(); showAlert("Error", "Gagal memproses verifikasi."); btn.disabled = false; }
     }
 
-    function openLogoutModal() { document.getElementById('modal-logout').style.display = 'flex'; }
+    function openLogoutModal() { triggerHaptic("confirm"); document.getElementById('modal-logout').style.display = 'flex'; }
     function closeLogoutModal() { document.getElementById('modal-logout').style.display = 'none'; }
 
     function logout() { 
+        triggerHaptic("confirm");
         if(state.geoWatchId) navigator.geolocation.clearWatch(state.geoWatchId);
         localStorage.removeItem('gardena_user'); 
         state.user = null; 
+        state.adminModeEnabled = false; 
         closeLogoutModal();
         showView('login'); 
+        renderUserSelect();
     }
 
     function closeFaceModal() {
@@ -1049,14 +1201,14 @@
         document.getElementById('login-oval').className = 'face-oval';
     }
 
-    function handleSelectChange(val) { if (val === 'NEW_REGISTER') openRegister(); }
+    function handleSelectChange(val) { 
+        triggerHaptic("confirm");
+        if (val === 'NEW_REGISTER') openRegister(); 
+        if (val === 'ADMIN') openAdminLogin(); 
+    }
 
     async function openRegister() {
-        if(!state.modelsLoaded) {
-            showLoading(true, "Menyiapkan AI...");
-            await loadModels();
-            showLoading(false);
-        }
+        if(!state.modelsLoaded) { showLoading(true, "Menyiapkan AI..."); await loadModels(); showLoading(false); }
         document.getElementById('modal-register').style.display = 'flex';
         const success = await getCameraStream('video-register');
         if (success) { 
@@ -1070,27 +1222,21 @@
         const btn = document.getElementById('btn-reg-save');
         const statusEl = document.getElementById('reg-status-text');
         const oval = document.getElementById('reg-oval');
-        
         if (!state.stream || !video || video.paused) return;
-
         const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 128, scoreThreshold: 0.5 }))
                                     .withFaceLandmarks().withFaceDescriptor();
-
         const alignment = isFaceAligned(detection, video.videoWidth, video.videoHeight);
-        
         if (alignment.aligned) {
             state.currentDescriptor = detection.descriptor;
-            oval.classList.remove('invalid'); oval.classList.add('valid');
+            oval.classList.add('valid');
             statusEl.innerText = alignment.status;
             statusEl.className = "text-[8px] text-center font-bold text-emerald-500 uppercase";
             btn.disabled = false;
-            triggerHaptic("confirm");
         } else {
             oval.classList.remove('valid'); if (detection) oval.classList.add('invalid');
             statusEl.innerText = alignment.status;
             statusEl.className = "text-[8px] text-center font-bold text-red-400 uppercase";
             btn.disabled = true; 
-            
             state.faceDetectionFrame = requestAnimationFrame(detectFaceLoopRegister);
         }
     }
@@ -1103,19 +1249,23 @@
     }
 
     async function processRegister() {
+        triggerHaptic("confirm");
+        const btn = document.getElementById('btn-reg-save');
+        btn.disabled = true;
         const nama = document.getElementById('reg-nama').value;
         const nip = document.getElementById('reg-nip').value;
-        if (!nama || !nip) return showAlert("Gagal", "Nama dan NIP wajib diisi!");
+        if (!nama || !nip) { btn.disabled = false; return showAlert("Gagal", "Nama dan NIP wajib diisi!"); }
         showLoading(true, "Mendaftarkan Wajah...");
         try {
             const descriptorStr = JSON.stringify(Array.from(state.currentDescriptor));
             await callGAS('addOfficer', [nama, nip, descriptorStr]);
             soundSuccess(); triggerHaptic("success");
             showAlert("Berhasil", "Akun terdaftar!"); closeRegister(); fetchData();
-        } catch (err) { soundError(); triggerHaptic("fail"); showLoading(false); }
+        } catch (err) { soundError(); triggerHaptic("error"); showLoading(false); btn.disabled = false; }
     }
 
     function openScanModal() {
+        triggerHaptic("confirm");
         document.getElementById('modal-scan').style.display = 'flex';
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(updateGeoUI, (err) => { 
@@ -1133,11 +1283,11 @@
                 if (state.isProcessing) return; 
                 if (state.currentLocation) {
                     const d = calculateDistance(state.currentLocation.coords.latitude, state.currentLocation.coords.longitude, TARGET_LOC.lat, TARGET_LOC.lng);
-                    if (d > TARGET_LOC.radius) { soundError(); triggerHaptic("fail"); return showAlert("Luar Radius", `Terlalu jauh (${d}m)!`); }
+                    if (d > TARGET_LOC.radius) { soundError(); triggerHaptic("error"); return showAlert("Luar Radius", `Terlalu jauh (${d}m)!`); }
                 }
                 processAttendance("QR"); 
                 closeScanModal();
-            } else { soundError(); triggerHaptic("fail"); showAlert("QR Salah", "QR tidak valid!"); }
+            } else { soundError(); triggerHaptic("error"); showAlert("QR Salah", "QR tidak valid!"); }
         }).catch(() => { state.qrScannerRunning = false; });
     }
 
@@ -1150,15 +1300,19 @@
         } else { document.getElementById('modal-scan').style.display = 'none'; }
     }
 
-    function openDLModal() { document.getElementById('modal-dl').style.display = 'flex'; }
+    function openDLModal() { triggerHaptic("confirm"); document.getElementById('modal-dl').style.display = 'flex'; }
     function closeDLModal() { document.getElementById('modal-dl').style.display = 'none'; }
     
     async function processDL() {
+        triggerHaptic("confirm");
+        const btn = document.getElementById('btn-dl-submit');
         if (state.isProcessing) return;
         const ket = document.getElementById('dl-keterangan').value;
         if(!ket) return showAlert("Opps", "Isi keterangan!");
         const todayStr = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Makassar' }).replace(/\./g, '/');
-        if (state.data.logs.some(l => l.name === state.user && l.date === todayStr)) return showAlert("Ditolak", "Hari ini sudah ada riwayat absen!");
+        const localDuplicate = state.data.logs.some(l => l.name === state.user && l.date === todayStr && l.type === "DL");
+        if (localDuplicate) return showAlert("Ditolak", "Hari ini sudah ada riwayat absen DL!");
+        btn.disabled = true;
         navigator.geolocation.getCurrentPosition((pos) => { 
             state.currentLocation = pos; closeDLModal(); processAttendance("DL", ket); 
         }, () => { closeDLModal(); processAttendance("DL", ket); });
@@ -1169,23 +1323,29 @@
         state.isProcessing = true; 
         const now = new Date();
         const todayStr = now.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Makassar' }).replace(/\./g, '/');
-        const myLogsToday = state.data.logs.filter(l => l.name === state.user && l.date === todayStr);
         const currentTimeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Makassar' }).replace('.', ':');
         const hour = parseInt(currentTimeStr.split(':')[0]);
         let type = hour < 12 ? "MASUK" : "PULANG";
         if (method === "DL") type = "DL";
-        
-        if (method === "QR") {
-            const hasMasuk = myLogsToday.some(l => l.type === "MASUK" || l.type === "DL");
-            const hasPulang = myLogsToday.some(l => l.type === "PULANG");
-            if (type === "MASUK" && hasMasuk) { state.isProcessing = false; soundError(); triggerHaptic("fail"); return showAlert("Ditolak", "Anda sudah absen masuk!"); }
+        const myLogsToday = state.data.logs.filter(l => l.name === state.user && l.date === todayStr);
+        const alreadyDL = myLogsToday.some(l => l.type === "DL");
+        if (alreadyDL && (type === "MASUK" || type === "PULANG")) {
+            state.isProcessing = false;
+            soundError(); triggerHaptic("error");
+            return showAlert("Ditolak", "Status hari ini DINAS LUAR (DL). Tidak perlu absen reguler!");
+        }
+        if (method === "QR" || method === "DL") {
+            const hasType = myLogsToday.some(l => l.type === type);
+            if (hasType) { 
+                state.isProcessing = false; 
+                soundError(); triggerHaptic("error"); 
+                return showAlert("Ditolak", `Anda sudah absen ${type} hari ini!`); 
+            }
             if (type === "PULANG") {
-                if (!hasMasuk) { state.isProcessing = false; soundError(); triggerHaptic("fail"); return showAlert("Ditolak", "Absen masuk belum ada!"); }
-                if (hasPulang) { state.isProcessing = false; soundError(); triggerHaptic("fail"); return showAlert("Ditolak", "Anda sudah absen pulang!"); }
-                if (myLogsToday.some(l => l.type === "DL")) { state.isProcessing = false; soundError(); triggerHaptic("fail"); return showAlert("Ditolak", "DL tidak perlu absen pulang!"); }
+                const hasMasuk = myLogsToday.some(l => l.type === "MASUK" || l.type === "DL");
+                if (!hasMasuk) { state.isProcessing = false; soundError(); triggerHaptic("error"); return showAlert("Ditolak", "Absen masuk belum ada!"); }
             }
         }
-        
         showLoading(true);
         const payload = { 
             name: state.user, type: type, note: note,
@@ -1193,35 +1353,82 @@
             coord: state.currentLocation ? `${state.currentLocation.coords.latitude},${state.currentLocation.coords.longitude}` : "No-GPS",
             clientTime: currentTimeStr
         };
-        
         try { 
             await callGAS('saveAttendance', [payload]); 
             soundSuccess(); triggerHaptic("success"); 
             showAlert("Berhasil", `${payload.type} Tercatat!`); 
             await fetchData(); 
-        } catch (err) { soundError(); triggerHaptic("fail"); } 
-        finally { state.isProcessing = false; showLoading(false); }
+        } catch (err) { soundError(); triggerHaptic("error"); } 
+        finally { 
+            state.isProcessing = false; showLoading(false); 
+            const dlBtn = document.getElementById('btn-dl-submit');
+            if(dlBtn) dlBtn.disabled = false;
+        }
     }
 
     function renderDailyLog() {
         const container = document.getElementById('daily-log-container');
+        const infoMasuk = document.getElementById('info-jam-masuk');
+        const infoPulang = document.getElementById('info-jam-pulang');
+        const infoKet = document.getElementById('info-status-ket');
         if(!container) return;
         const now = new Date();
         const todayStr = now.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Makassar' }).replace(/\./g, '/');
         const myLogsToday = state.data.logs.filter(l => l.name === state.user && l.date === todayStr);
+        infoMasuk.innerText = "--:--";
+        infoPulang.innerText = "--:--";
+        infoKet.innerText = "SIAP BERTUGAS HARI INI ✨";
         if (myLogsToday.length > 0) {
-            container.innerHTML = myLogsToday.map(l => `
-                <div class="log-card">
-                    <div>
-                        <p class="text-[10px] font-black text-slate-800 uppercase">${l.type} ${l.type === 'DL' ? '('+l.note+')' : ''}</p>
-                        <p class="text-[8px] text-slate-400 font-bold uppercase">${formatTimeFix(l.time)}</p>
+            container.innerHTML = myLogsToday.map(l => {
+                const fixedTime = formatTimeFix(l.time);
+                if (l.type === 'MASUK') infoMasuk.innerText = fixedTime;
+                if (l.type === 'PULANG') infoPulang.innerText = fixedTime;
+                if (l.type === 'DL') {
+                    infoMasuk.innerText = "DL";
+                    infoPulang.innerText = "DL";
+                    infoKet.innerText = "SEDANG DINAS LUAR 🚀";
+                } else if (l.status.includes('TERLAMBAT')) {
+                    infoKet.innerText = "TERLAMBAT MASUK ⚠️";
+                } else if (myLogsToday.some(x => x.type === 'PULANG')) {
+                    infoKet.innerText = "TUGAS SELESAI HARI INI ✅";
+                } else if (myLogsToday.some(x => x.type === 'MASUK')) {
+                    infoKet.innerText = "SEDANG DALAM JAM KERJA 💼";
+                }
+                return `
+                    <div class="log-card shadow-sm border border-slate-100">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center bg-white text-xs shadow-sm">
+                                ${l.type === 'MASUK' ? '🟢' : l.type === 'PULANG' ? '🔴' : '🚀'}
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-black text-slate-800 uppercase tracking-tighter">${l.type} ${l.type === 'DL' ? '('+l.note+')' : ''}</p>
+                                <p class="text-[8px] text-slate-400 font-bold uppercase tracking-widest">${fixedTime}</p>
+                            </div>
+                        </div>
+                        <span class="text-[7px] font-black px-2 py-1 rounded-lg bg-white border border-slate-100 ${l.status.includes('TERLAMBAT') ? 'text-red-500' : 'text-emerald-500'} shadow-sm">${l.status || 'OK'}</span>
                     </div>
-                    <span class="text-[7px] font-black px-2 py-1 rounded bg-white border border-slate-100 ${l.status.includes('TERLAMBAT') ? 'text-red-500' : 'text-emerald-500'}">${l.status || 'OK'}</span>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         } else {
-            container.innerHTML = '<p class="text-center py-4 text-[9px] font-bold text-slate-300 uppercase">Belum ada absen hari ini</p>';
+            container.innerHTML = '<div class="text-center py-6"><p class="text-[9px] font-bold text-slate-300 uppercase tracking-widest">Belum ada absen tercatat hari ini</p></div>';
         }
+    }
+
+    function handleFilterChange(trigger) {
+        if (trigger === 'date') {
+            const dateVal = document.getElementById('filter-tanggal').value;
+            if (dateVal) {
+                const d = new Date(dateVal);
+                document.getElementById('filter-bulan').value = (d.getMonth() + 1).toString().padStart(2, '0');
+                document.getElementById('filter-tahun').value = d.getFullYear().toString();
+            }
+        }
+        renderRekap();
+    }
+
+    function clearAllFilters() {
+        setFilterDefault();
+        renderRekap();
     }
 
     function renderRekap() {
@@ -1229,26 +1436,69 @@
         if(!tbody) return;
         const filterBulan = document.getElementById('filter-bulan').value;
         const filterTahun = document.getElementById('filter-tahun').value;
+        const filterTanggalInput = document.getElementById('filter-tanggal').value;
+        const searchQuery = document.getElementById('search-nama').value.toLowerCase();
+        const filterStatus = document.getElementById('filter-status').value;
+        
+        let targetDateFormatted = null;
+        if (filterTanggalInput) {
+            const parts = filterTanggalInput.split('-');
+            targetDateFormatted = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+
         const grouped = {};
         state.data.logs.forEach(l => {
             const parts = l.date.split('/');
-            if (parts[1] !== filterBulan || parts[2] !== filterTahun) return;
+            if (searchQuery && !l.name.toLowerCase().includes(searchQuery)) return;
+            if (targetDateFormatted) { if (l.date !== targetDateFormatted) return; } 
+            else { if (parts[1] !== filterBulan || parts[2] !== filterTahun) return; }
+
             const key = `${l.date}_${l.name}`;
-            if(!grouped[key]) grouped[key] = { name: l.name, date: l.date, masuk: "-", pulang: "-", ket: "-" };
+            if(!grouped[key]) grouped[key] = { name: l.name, date: l.date, masuk: "-", pulang: "-", ket: "-", rawDate: l.date, statusType: "HADIR" };
+            
             const fixedTime = formatTimeFix(l.time);
             if(l.type === "MASUK") grouped[key].masuk = fixedTime;
             if(l.type === "PULANG") grouped[key].pulang = fixedTime;
-            if(l.type === "DL") { grouped[key].masuk = "DL"; grouped[key].pulang = "DL"; grouped[key].ket = l.note; }
-            if(l.status.includes("TERLAMBAT")) grouped[key].ket = l.status;
+            if(l.type === "DL") { 
+                grouped[key].masuk = "DL"; grouped[key].pulang = "DL"; grouped[key].ket = l.note; 
+                grouped[key].statusType = "DL";
+            }
+            if(l.status.includes("TERLAMBAT")) {
+                grouped[key].ket = l.status;
+                grouped[key].statusType = "TERLAMBAT";
+            }
+
+            if (filterStatus !== "SEMUA") {
+                if (grouped[key].statusType !== filterStatus) {
+                    delete grouped[key];
+                    return;
+                }
+            }
         });
-        const sortedKeys = Object.keys(grouped).sort((a,b) => b.localeCompare(a));
+
+        const sortedKeys = Object.keys(grouped).sort((a, b) => {
+            const [da, ma, ya] = grouped[a].rawDate.split('/').map(Number);
+            const [db, mb, yb] = grouped[b].rawDate.split('/').map(Number);
+            const dateA = new Date(ya, ma - 1, da);
+            const dateB = new Date(yb, mb - 1, db);
+            if (dateA.getTime() !== dateB.getTime()) return dateA - dateB;
+            return grouped[a].name.localeCompare(grouped[b].name);
+        });
+
         tbody.innerHTML = sortedKeys.length > 0 ? sortedKeys.map(k => {
             const r = grouped[k];
-            return `<tr><td>${r.name}</td><td>${r.date}</td><td>${r.masuk} - ${r.pulang}</td><td><span class="${r.ket.includes('TERLAMBAT') ? 'text-red-500' : 'text-blue-500'}">${r.ket}</span></td></tr>`;
+            const isMe = r.name === state.user;
+            return `<tr class="${isMe ? 'my-row' : ''}">
+                <td>${r.name}</td>
+                <td>${r.date}</td>
+                <td>${r.masuk} - ${r.pulang}</td>
+                <td><span class="${r.ket.includes('TERLAMBAT') ? 'text-red-500' : 'text-blue-500'}">${r.ket}</span></td>
+            </tr>`;
         }).join('') : '<tr><td colspan="4" class="text-center py-10 text-slate-300">Data tidak ditemukan</td></tr>';
     }
 
     function downloadExcel() {
+        triggerHaptic("confirm");
         const filterBulan = document.getElementById('filter-bulan').options[document.getElementById('filter-bulan').selectedIndex].text;
         const filterTahun = document.getElementById('filter-tahun').value;
         const table = document.getElementById('table-to-download');
@@ -1256,24 +1506,27 @@
         XLSX.writeFile(wb, `REKAP_GARDENA_${filterBulan}_${filterTahun}.xlsx`);
     }
 
-    /* --- OPTIMASI 4: WARM UP AI SAAT SPLASH --- */
     window.onload = async () => { 
-        // Mulai download model AI saat splash screen masih berjalan (Background loading)
+        detectPlatform();
         loadModels(); 
-        
         await fetchData();
         setTimeout(() => {
             const splash = document.getElementById('splash-screen');
             splash.classList.add('fade-out');
             if(state.user) { 
-                state.currentView = 'profile';
-                document.getElementById('view-login').classList.remove('active');
-                document.getElementById('view-profile').classList.add('active');
-                const nav = document.getElementById('main-nav');
-                const fab = document.getElementById('fab-scan-qr');
-                nav.classList.remove('hidden'); fab.classList.remove('hidden');
-                document.getElementById('nav-profile').classList.add('active');
-                updateProfileInfo(); startGeoMonitoring(); renderDailyLog(); updateDashboardStats();
+                if(state.user === 'ADMIN') { 
+                    state.adminModeEnabled = true;
+                    showView('rekap'); 
+                } 
+                else {
+                    state.currentView = 'profile';
+                    document.getElementById('view-login').classList.remove('active');
+                    document.getElementById('view-profile').classList.add('active');
+                    document.getElementById('main-nav').classList.remove('hidden');
+                    document.getElementById('fab-scan-qr').classList.remove('hidden');
+                    document.getElementById('nav-profile').classList.add('active');
+                    updateProfileInfo(); startGeoMonitoring(); renderDailyLog(); updateDashboardStats();
+                }
             }
         }, 3000); 
         setInterval(() => {
@@ -1282,14 +1535,13 @@
         }, 1000); 
     };
 
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=1778025830402');
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
     function checkConnectionAndSync() {
         if (navigator.onLine) document.getElementById('offline-banner').style.display = 'none';
         else document.getElementById('offline-banner').style.display = 'block';
     }
     window.addEventListener('online', checkConnectionAndSync);
     window.addEventListener('load', checkConnectionAndSync);
-    window.addEventListener('offline', () => document.getElementById('offline-banner').style.display='block');
 </script>
 </body>
 </html>

@@ -1503,13 +1503,13 @@
         if(sel) sel.value = ""; 
     }
     function processAdminLogin() {
-        const pin = document.getElementById('admin-pin').value;
-        if (pin === ADMIN_PASSWORD) {
-            state.user = "ADMIN"; localStorage.setItem('gardena_user', 'ADMIN');
-            document.getElementById('modal-admin-login').style.display = 'none';
-            showView('rekap'); showAlert("Berhasil", "Administrator Aktif ✨");
-        } else { showAlert("Ditolak", "PIN Salah!"); }
+    const pin = document.getElementById('admin-pin').value;
+    if (pin === ADMIN_PASSWORD) {
+        window.location.href = 'dasbordadmin.html'; // Pindah ke dashboard admin
+    } else { 
+        showAlert("Ditolak", "PIN Salah!"); 
     }
+}
 
     function openLogoutModal() { triggerHaptic("confirm"); document.getElementById('modal-logout').style.display = 'flex'; }
     function closeLogoutModal() { document.getElementById('modal-logout').style.display = 'none'; }

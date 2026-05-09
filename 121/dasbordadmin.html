@@ -72,7 +72,6 @@
         }
         .dark .filter-input { background: #334155; border-color: #475569; color: white; }
 
-        /* Swipe to Delete Styles */
         .swipe-container { position: relative; overflow: hidden; border-radius: 18px; margin-bottom: 10px; }
         .swipe-action { position: absolute; right: 0; top: 0; bottom: 0; width: 80px; background: #ef4444; display: flex; align-items: center; justify-content: center; color: white; z-index: 1; border-radius: 0 18px 18px 0; }
         
@@ -119,6 +118,27 @@
             width: 90%; max-width: 400px; background: var(--primary); color: white;
             padding: 12px 24px; border-radius: 20px; display: none; justify-content: space-between;
             align-items: center; z-index: 1000; box-shadow: 0 10px 30px rgba(219, 39, 119, 0.4);
+        }
+        
+        .officer-list-card {
+            background: var(--card-bg);
+            margin: 20px;
+            padding: 20px;
+            border-radius: 24px;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        /* Accordion Mobile Logic */
+        @media (max-width: 640px) {
+            .collapsible-content { 
+                max-height: 0; 
+                overflow: hidden; 
+                transition: max-height 0.5s ease-out; 
+            }
+            .collapsible-content.active { max-height: 500px; margin-top: 15px; }
+            .accordion-header { cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+            .accordion-header::after { content: '▼'; font-size: 8px; opacity: 0.5; transition: 0.3s; }
+            .accordion-header.active::after { transform: rotate(180deg); }
         }
     </style>
 </head>
@@ -179,25 +199,37 @@
         <div id="absent-list" class="flex flex-wrap gap-2"></div>
     </div>
 
-    <div class="leaderboard-card shadow-sm">
-        <div class="flex items-center gap-2 mb-4">
-            <span class="text-lg">🏆</span>
-            <h2 class="text-[11px] font-black text-pink-600 dark:text-pink-400 uppercase tracking-widest">Top 5 Disiplin Bulan Ini</h2>
+    <div class="officer-list-card shadow-sm accordion-section" id="section-officers">
+        <div class="accordion-header" onclick="toggleAccordion('officers')">
+            <div class="flex items-center gap-2">
+                <span class="text-lg">👥</span>
+                <h2 class="text-[11px] font-black text-primary dark:text-pink-400 uppercase tracking-widest">Daftar Petugas Lengkap</h2>
+            </div>
         </div>
-        <div id="leaderboard-list" class="space-y-3"></div>
+        <div id="full-officer-list" class="collapsible-content space-y-2 overflow-y-auto pr-2" style="scrollbar-width: thin;">
+            </div>
     </div>
 
-    <div class="main-card">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-xs font-black text-slate-400 uppercase tracking-widest">Kontrol Data</h2>
-            <div class="flex gap-2">
-                <button onclick="triggerArchive()" class="text-blue-500 font-black text-[10px] uppercase mr-2">Archive</button>
+    <div class="leaderboard-card shadow-sm accordion-section" id="section-leaderboard">
+        <div class="accordion-header" onclick="toggleAccordion('leaderboard')">
+            <div class="flex items-center gap-2">
+                <span class="text-lg">🏆</span>
+                <h2 class="text-[11px] font-black text-pink-600 dark:text-pink-400 uppercase tracking-widest">Top 5 Disiplin Bulan Ini</h2>
+            </div>
+        </div>
+        <div id="leaderboard-list" class="collapsible-content space-y-3"></div>
+    </div>
+
+    <div class="main-card accordion-section" id="section-controls">
+        <div class="accordion-header" onclick="toggleAccordion('controls')">
+            <h2 class="text-xs font-black text-slate-400 uppercase tracking-widest">Kontrol Data & Filter</h2>
+        </div>
+        <div class="collapsible-content space-y-3">
+            <div class="flex justify-end gap-2 mb-2">
+                <button onclick="triggerArchive()" class="text-blue-500 font-black text-[10px] uppercase">Archive</button>
                 <button onclick="downloadPDF()" class="text-pink-600 font-black text-[10px] uppercase">PDF</button>
                 <button onclick="downloadExcel()" class="text-emerald-500 font-black text-[10px] uppercase">Excel</button>
             </div>
-        </div>
-        
-        <div class="space-y-3">
             <input type="text" id="search-name" oninput="applyFilters()" placeholder="Cari nama petugas..." class="filter-input">
             <div class="grid grid-cols-2 gap-2">
                 <select id="filter-month" onchange="applyFilters()" class="filter-input">
@@ -255,14 +287,38 @@
 
     function toggleDarkMode() {
         document.body.classList.toggle('dark');
-        const isDark = document.body.classList.contains('dark');
-        localStorage.setItem('gardena_dark', isDark);
+        localStorage.setItem('gardena_dark', document.body.classList.contains('dark'));
+    }
+
+    // Accordion Logic
+    function toggleAccordion(targetId) {
+        if (window.innerWidth > 640) return; // Disable on desktop
+        
+        const sections = ['officers', 'leaderboard', 'controls'];
+        sections.forEach(id => {
+            const header = document.querySelector(`#section-${id} .accordion-header`);
+            const content = document.querySelector(`#section-${id} .collapsible-content`);
+            if (id === targetId) {
+                const isOpen = content.classList.contains('active');
+                header.classList.toggle('active', !isOpen);
+                content.classList.toggle('active', !isOpen);
+            } else {
+                header.classList.remove('active');
+                content.classList.remove('active');
+            }
+        });
     }
 
     async function initAdmin() {
         if (localStorage.getItem('gardena_user') !== 'ADMIN') { window.location.href = "index.html"; return; }
         if (localStorage.getItem('gardena_dark') === 'true') document.body.classList.add('dark');
         
+        // Open controls by default on load
+        if (window.innerWidth <= 640) {
+            document.querySelector('#section-controls .accordion-header').classList.add('active');
+            document.querySelector('#section-controls .collapsible-content').classList.add('active');
+        }
+
         const now = new Date();
         document.getElementById('filter-month').value = (now.getMonth() + 1).toString().padStart(2, '0');
         document.getElementById('filter-year').value = now.getFullYear();
@@ -278,6 +334,7 @@
             updateStats();
             renderChart();
             renderLeaderboard();
+            renderFullOfficerList();
             applyFilters();
             checkAbsentees();
         } catch (e) { console.error(e); }
@@ -286,21 +343,19 @@
     function updateStats() {
         const today = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\./g, '/');
         const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\./g, '/');
-        
         const logsToday = fullData.logs.filter(l => l.date === today);
         const logsYesterday = fullData.logs.filter(l => l.date === yesterday);
-        
-        const totalNakes = fullData.officers.length;
+        const uniqueOfficers = [...new Set(fullData.officers)];
+        const totalNakes = uniqueOfficers.length;
         const hadirToday = logsToday.filter(l => l.type === 'MASUK' || l.type === 'DL').length;
         const hadirYesterday = logsYesterday.filter(l => l.type === 'MASUK' || l.type === 'DL').length;
         
-                // Rata-rata Jam Masuk (FIX NaN:NaN)
         const masukTimes = logsToday.filter(l => l.type === 'MASUK').map(l => {
             const timeStr = formatTime(l.time);
             if (!timeStr || timeStr === "--:--") return null;
             const t = timeStr.split(':');
             return parseInt(t[0]) * 60 + parseInt(t[1]);
-        }).filter(t => t !== null); // Memastikan hanya data valid yang dihitung
+        }).filter(t => t !== null); 
         
         const avgTimeEl = document.getElementById('avg-time-in');
         if (masukTimes.length > 0) {
@@ -309,14 +364,11 @@
             const m = (avgMin%60).toString().padStart(2,'0');
             avgTimeEl.innerText = `Rata-rata Masuk: ${h}:${m}`;
         } else {
-            // Jika belum ada yang absen masuk, tampilkan strip agar tidak NaN
             avgTimeEl.innerText = `Rata-rata Masuk: --:--`;
         }
 
-        // Statistik Persentase & Tren
         const percentToday = totalNakes > 0 ? Math.round((hadirToday/totalNakes)*100) : 0;
         const percentYesterday = totalNakes > 0 ? Math.round((hadirYesterday/totalNakes)*100) : 0;
-        
         document.getElementById('stat-percent').innerText = percentToday + "%";
         document.getElementById('stat-progress').style.width = percentToday + "%";
         
@@ -332,28 +384,25 @@
     function checkAbsentees() {
         const today = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\./g, '/');
         const hadirNames = fullData.logs.filter(l => l.date === today && (l.type === 'MASUK' || l.type === 'DL')).map(l => l.name);
-        const absent = fullData.officers.filter(name => !hadirNames.includes(name));
-        
+        const uniqueOfficers = [...new Set(fullData.officers)];
+        const absent = uniqueOfficers.filter(name => !hadirNames.includes(name));
         const alertBox = document.getElementById('absent-alert');
-        const list = document.getElementById('absent-list');
-        
-        if (absent.length > 0 && new Date().getHours() >= 8 && new Date().getMinutes() >= 30) {
+        if (absent.length > 0 && new Date().getHours() >= 8 && (new Date().getHours() > 8 || new Date().getMinutes() >= 30)) {
             alertBox.classList.remove('hidden');
-            list.innerHTML = absent.map(name => `<span class="px-2 py-1 bg-rose-100 text-rose-700 text-[8px] font-black rounded-lg uppercase">${name}</span>`).join('');
-        } else {
-            alertBox.classList.add('hidden');
-        }
+            document.getElementById('absent-list').innerHTML = absent.map(name => `<span class="px-2 py-1 bg-rose-100 text-rose-700 text-[8px] font-black rounded-lg uppercase">${name}</span>`).join('');
+        } else { alertBox.classList.add('hidden'); }
     }
 
-    function calculateDuration(inTime, outTime) {
-        if (!inTime || !outTime) return "";
-        const t1 = formatTime(inTime).split(':');
-        const t2 = formatTime(outTime).split(':');
-        let diff = (parseInt(t2[0])*60 + parseInt(t2[1])) - (parseInt(t1[0])*60 + parseInt(t1[1]));
-        if (diff < 0) return "";
-        const h = Math.floor(diff/60);
-        const m = diff % 60;
-        return `⏱️ ${h}j ${m}m`;
+    function renderFullOfficerList() {
+        const uniqueOfficers = [...new Set(fullData.officers)];
+        document.getElementById('full-officer-list').innerHTML = uniqueOfficers.map((name, i) => `
+            <div class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
+                <div class="flex items-center gap-3">
+                    <span class="text-[10px] font-bold text-slate-400">${(i + 1).toString().padStart(2, '0')}</span>
+                    <p class="text-[10px] font-black text-slate-700 dark:text-white uppercase">${name}</p>
+                </div>
+                <span class="w-2 h-2 rounded-full ${fullData.logs.some(l => l.name === name && l.date === new Date().toLocaleDateString('id-ID', {day:'2-digit', month:'2-digit', year:'numeric'}).replace(/\./g,'/')) ? 'bg-emerald-500' : 'bg-slate-300'}"></span>
+            </div>`).join('') || '<p class="text-center text-[9px] text-slate-400 py-4 uppercase">Data petugas belum dimuat</p>';
     }
 
     function applyFilters() {
@@ -369,48 +418,35 @@
             const matchesDate = dp[1] === month && dp[2] === year;
             let matchesStatus = true;
             if (statusQ === "HADIR") matchesStatus = l.type === "MASUK" && (!l.status || !l.status.toUpperCase().includes("TERLAMBAT"));
-            else if (statusQ === "TERLAMBAT") matchesStatus = l.status && l.status.toUpperCase().includes("TERLAMBAT");
+            else if (statusQ === "TERLAMBAT") matchesStatus = l.status?.toUpperCase().includes("TERLAMBAT");
             else if (statusQ === "DL") matchesStatus = l.type === "DL";
             else if (statusQ === "PULANG") matchesStatus = l.type === "PULANG";
             return matchesName && matchesDate && matchesStatus;
         });
 
         container.innerHTML = filtered.map((l, idx) => {
-            const isTerlambat = l.status?.toUpperCase().includes("TERLAMBAT");
             const rowId = l.row || idx;
-            
-            // Durasi kerja logic
-            let durationStr = "";
-            if (l.type === "PULANG") {
-                const masukLog = fullData.logs.find(x => x.name === l.name && x.date === l.date && x.type === "MASUK");
-                if (masukLog) durationStr = calculateDuration(masukLog.time, l.time);
-            }
-
             return `
-            <div class="swipe-container" 
-                 ontouchstart="handleTS(event)" 
-                 ontouchmove="handleTM(event, ${rowId})" 
-                 ontouchend="handleTE(event, ${rowId})">
+            <div class="swipe-container" ontouchstart="handleTS(event)" ontouchmove="handleTM(event, ${rowId})" ontouchend="handleTE(event, ${rowId})">
                 <div class="swipe-action" onclick="deleteLog(${rowId}, '${l.name}')">🗑️</div>
                 <div id="log-${rowId}" class="log-item shadow-sm">
                     <div class="flex items-center gap-3">
                         <input type="checkbox" value="${rowId}" onchange="updateSelection()" ${selectedRows.includes(rowId) ? 'checked' : ''} class="w-4 h-4 rounded border-slate-300">
                         <div>
                             <p class="text-xs font-black text-slate-800 dark:text-white uppercase">${l.name}</p>
-                            <p class="text-[9px] font-bold text-slate-400 uppercase">${l.date} • ${formatTime(l.time)} ${durationStr}</p>
+                            <p class="text-[9px] font-bold text-slate-400 uppercase">${l.date} • ${formatTime(l.time)}</p>
                             ${l.type === 'DL' ? `<p class="text-[8px] font-bold text-indigo-500 mt-1 italic">📌 ${l.note || 'Dinas Luar'}</p>` : ''}
                         </div>
                     </div>
                     <div class="text-right">
                         <span class="status-pill ${getStatusColor(l.type)}">${l.type}</span>
-                        <p class="text-[8px] font-black mt-1 uppercase ${isTerlambat ? 'text-rose-500 animate-pulse' : 'text-slate-400'}">${l.status || 'OK'}</p>
+                        <p class="text-[8px] font-black mt-1 uppercase ${l.status?.toUpperCase().includes('TERLAMBAT') ? 'text-rose-500 animate-pulse' : 'text-slate-400'}">${l.status || 'OK'}</p>
                     </div>
                 </div>
             </div>`;
         }).join('') || '<p class="text-center text-[10px] text-slate-300 py-10 font-bold uppercase">Data Kosong</p>';
     }
 
-    // Touch Handlers for Swipe
     function handleTS(e) { touchStartX = e.touches[0].clientX; }
     function handleTM(e, id) {
         const diff = touchStartX - e.touches[0].clientX;
@@ -419,48 +455,48 @@
     }
     function handleTE(e, id) {
         const el = document.getElementById(`log-${id}`);
-        const diff = touchStartX - e.changedTouches[0].clientX;
-        if (diff > 50) el.style.transform = `translateX(-80px)`;
+        if (touchStartX - e.changedTouches[0].clientX > 50) el.style.transform = `translateX(-80px)`;
         else el.style.transform = `translateX(0)`;
     }
 
     function updateSelection() {
         const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
         selectedRows = Array.from(checkboxes).map(cb => parseInt(cb.value));
-        const bar = document.getElementById('multi-action-bar');
-        const count = document.getElementById('select-count');
-        if (selectedRows.length > 0) {
-            bar.style.display = 'flex';
-            count.innerText = `${selectedRows.length} Terpilih`;
-        } else {
-            bar.style.display = 'none';
-        }
+        document.getElementById('multi-action-bar').style.display = selectedRows.length > 0 ? 'flex' : 'none';
+        document.getElementById('select-count').innerText = `${selectedRows.length} Terpilih`;
+    }
+
+    function toggleSelectAll() {
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        checkboxes.forEach(cb => cb.checked = !allChecked);
+        updateSelection();
     }
 
     async function deleteSelected() {
         if (!confirm(`Hapus ${selectedRows.length} data terpilih?`)) return;
         showLoading(true);
-        for (let id of selectedRows) {
-            await fetch(`${WEB_APP_URL}?action=deleteLog&data=${id}`);
-        }
-        selectedRows = [];
-        updateSelection();
-        await loadData();
-        showLoading(false);
+        for (let id of selectedRows) await fetch(`${WEB_APP_URL}?action=deleteLog&data=${id}`);
+        selectedRows = []; updateSelection(); await loadData(); showLoading(false);
+    }
+
+    async function deleteLog(rowId, name) {
+        if (!confirm(`Hapus data absensi milik ${name}?`)) return;
+        showLoading(true);
+        await fetch(`${WEB_APP_URL}?action=deleteLog&data=${rowId}`);
+        await loadData(); showLoading(false);
     }
 
     function showLoading(s) { document.body.style.opacity = s ? "0.5" : "1"; }
     function getStatusColor(t) { return t==='MASUK'?'bg-emerald-100 text-emerald-600':t==='PULANG'?'bg-pink-100 text-pink-600':t==='DL'?'bg-amber-100 text-amber-600':'bg-slate-100'; }
 
-    // Logic Leaderboard & Chart tetap sama (logic lama)
     function renderLeaderboard() {
         const month = document.getElementById('filter-month').value;
         const stats = {};
         fullData.logs.forEach(l => {
             if (l.date.split('/')[1] === month && (l.type === 'MASUK' || l.type === 'DL')) {
-                const late = l.status?.toUpperCase().includes("TERLAMBAT");
                 if (!stats[l.name]) stats[l.name] = { score: 0 };
-                stats[l.name].score += late ? 0.5 : 1;
+                stats[l.name].score += l.status?.toUpperCase().includes("TERLAMBAT") ? 0.5 : 1;
             }
         });
         const top5 = Object.entries(stats).sort((a,b) => b[1].score - a[1].score).slice(0,5);
@@ -471,7 +507,7 @@
                     <p class="text-[10px] font-black text-slate-700 dark:text-white uppercase">${name}</p>
                 </div>
                 <p class="text-[9px] font-extrabold text-pink-500">${data.score} Pts</p>
-            </div>`).join('');
+            </div>`).join('') || '<p class="text-center text-[9px] text-slate-400 py-4 uppercase">Belum ada data skor</p>';
     }
 
     function renderChart() {
@@ -486,20 +522,34 @@
         if(attendanceChart) attendanceChart.destroy();
         attendanceChart = new Chart(ctx, {
             type:'line', data: { labels: last7, datasets: [{ data: counts, borderColor:'#fff', backgroundColor:'rgba(255,255,255,0.1)', fill:true, tension:0.4, pointRadius:0 }] },
-            options: { plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#fff', font: { size: 8 } }, grid: { display: false } }, y: { display: false } } }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#fff', font: { size: 8 } }, grid: { display: false } }, y: { display: false } } }
         });
     }
 
-    function manualRefresh() { manualRefreshLogic(); }
-    async function manualRefreshLogic() {
+    async function manualRefresh() {
         const btn = document.getElementById('btn-refresh');
-        btn.classList.add('animate-spin');
-        await loadData();
-        btn.classList.remove('animate-spin');
+        btn.classList.add('animate-spin'); await loadData(); btn.classList.remove('animate-spin');
     }
 
     function showSkeletons() {
         document.getElementById('admin-log-list').innerHTML = '<div class="h-16 w-full skeleton rounded-xl mb-2"></div>'.repeat(5);
+    }
+
+    async function triggerArchive() {
+        if(!confirm("Arsipkan data tahun lalu?")) return;
+        showLoading(true); await fetch(`${WEB_APP_URL}?action=archiveData`); await loadData(); showLoading(false);
+    }
+
+    function downloadPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.autoTable({ head: [['Nama', 'Tanggal', 'Jam', 'Tipe', 'Status']], body: fullData.logs.map(l => [l.name, l.date, formatTime(l.time), l.type, l.status]), headStyles: {fillColor: [219, 39, 119]} });
+        doc.save('GARDENA_REKAP.pdf');
+    }
+
+    function downloadExcel() {
+        const ws = XLSX.utils.json_to_sheet(fullData.logs.map(l => ({ "Nama": l.name, "Tanggal": l.date, "Jam": formatTime(l.time), "Tipe": l.type, "Status": l.status })));
+        const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Rekap"); XLSX.writeFile(wb, `REKAP_GARDENA.xlsx`);
     }
 
     window.onload = initAdmin;

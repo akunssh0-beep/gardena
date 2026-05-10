@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>REKAP ADMIN - GARDENA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+
+    <style>
+        :root { 
+            --primary: #db2777; 
+            --accent: #6366f1; 
+            --bg: #f1f5f9; 
+            --card-bg: #ffffff; 
+            --border-color: #e2e8f0; 
+            --text-main: #0f172a; 
+            --text-mute: #64748b;
+            --sat: env(safe-area-inset-top);
+            --sab: env(safe-area-inset-bottom);
+        }
+        
+        * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; transition: 0.3s; }
+        
+        body { background-color: var(--bg); margin: 0; display: flex; justify-content: center; }
+        
+        .app-container { 
+            width: 100%; max-width: 500px; background: var(--card-bg); min-height: 100dvh; 
+            display: flex; flex-direction: column; position: relative; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+
+        .pink-header { 
+            background: linear-gradient(135deg, #db2777 0%, #be185d 40%, #6366f1 100%); 
+            padding-top: calc(1.5rem + var(--sat));
+            border-radius: 0 0 35px 35px;
+            color: white;
+        }
+
+        .rekap-wrapper { width: 100%; overflow-x: auto; border-radius: 20px; background: white; }
+        .rekap-table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 600px; }
+        .rekap-table th { background: #f8fafc; padding: 14px 10px; text-align: left; border-bottom: 2px solid #e2e8f0; color: #64748b; font-weight: 800; text-transform: uppercase; }
+        .rekap-table td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; color: var(--text-main); font-weight: 600; }
+        
+        .status-badge { padding: 4px 8px; border-radius: 8px; font-size: 9px; font-weight: 800; text-transform: uppercase; }
+        .badge-hadir { background: #ecfdf5; color: #10b981; }
+        .badge-terlambat { background: #fef2f2; color: #ef4444; }
+        .badge-dl { background: #eef2ff; color: #6366f1; }
+
+        input, select { font-size: 14px !important; outline: none; }
+        
+        .btn-sync {
+            width: 40px; height: 40px;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(8px);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            border: 1px solid rgba(255,255,255,0.3);
+            cursor: pointer;
+        }
+        .btn-sync:active { transform: rotate(180deg); }
+        .spinning { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        #loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    </style>
+</head>
+<body>
+
+<div id="loading-overlay">
+    <div class="w-12 h-12 border-4 border-pink-200 border-t-pink-600 rounded-full animate-spin mb-4"></div>
+    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Memuat Database Petugas...</p>
+</div>
+
+<div class="app-container">
+    <div class="pink-header p-6 pb-10 shadow-lg">
+        <div class="flex justify-between items-center mb-6">
+            <button onclick="window.history.back()" class="w-10 h-10 flex items-center justify-center bg-white/20 rounded-xl border border-white/30">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+            <div class="text-center">
+                <h2 class="text-xl font-black uppercase tracking-tight">Rekapitulasi Admin</h2>
+                <p class="text-[9px] font-bold text-white/70 uppercase">Seluruh Petugas Sampanahan</p>
+            </div>
+            <button onclick="refreshData(this)" class="btn-sync">🔄</button>
+        </div>
+
+        <div class="grid grid-cols-4 gap-2">
+            <div class="bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/10 text-center">
+                <p class="text-[7px] font-black uppercase opacity-70 mb-1">Total</p>
+                <p id="stat-total" class="text-lg font-black">0</p>
+            </div>
+            <div class="bg-emerald-500/20 backdrop-blur-md p-3 rounded-2xl border border-emerald-500/30 text-center">
+                <p class="text-[7px] font-black uppercase opacity-70 mb-1">Hadir</p>
+                <p id="stat-hadir" class="text-lg font-black text-emerald-200">0</p>
+            </div>
+            <div class="bg-rose-500/20 backdrop-blur-md p-3 rounded-2xl border border-rose-500/30 text-center">
+                <p class="text-[7px] font-black uppercase opacity-70 mb-1">Telat</p>
+                <p id="stat-telat" class="text-lg font-black text-rose-200">0</p>
+            </div>
+            <div class="bg-indigo-500/20 backdrop-blur-md p-3 rounded-2xl border border-indigo-500/30 text-center">
+                <p class="text-[7px] font-black uppercase opacity-70 mb-1">DL</p>
+                <p id="stat-dl" class="text-lg font-black text-indigo-200">0</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="p-6 flex-1 bg-slate-50">
+        <div class="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 mb-6 space-y-3">
+            <div class="relative">
+                <input type="text" id="search-admin" oninput="renderAdminRekap()" placeholder="Cari Nama Petugas..." class="w-full bg-slate-50 border border-slate-200 p-3 pl-10 rounded-xl text-xs font-bold focus:border-pink-400">
+                <span class="absolute left-3 top-3">🔍</span>
+            </div>
+            
+            <div class="grid grid-cols-1">
+                <div class="relative">
+                    <input type="date" id="filter-tanggal" onchange="handleDateChange(this.value)" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs font-bold focus:border-pink-400">
+                    <button onclick="clearDateFilter()" class="absolute right-3 top-3 text-[10px] font-black text-pink-600 uppercase">Reset Tgl</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+                <select id="filter-bulan" onchange="renderAdminRekap()" class="bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs font-bold">
+                    <option value="01">JANUARI</option><option value="02">FEBRUARI</option><option value="03">MARET</option><option value="04">APRIL</option><option value="05">MEI</option><option value="06">JUNI</option><option value="07">JULI</option><option value="08">AGUSTUS</option><option value="09">SEPTEMBER</option><option value="10">OKTOBER</option><option value="11">NOVEMBER</option><option value="12">DESEMBER</option>
+                </select>
+                <select id="filter-tahun" onchange="renderAdminRekap()" class="bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs font-bold">
+                    <option value="2024">2024</option>
+                    <option value="2025">2025</option>
+                    <option value="2026">2026</option>
+                </select>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <select id="filter-status" onchange="renderAdminRekap()" class="bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs font-bold">
+                    <option value="SEMUA">-- STATUS --</option>
+                    <option value="HADIR">HADIR</option>
+                    <option value="TERLAMBAT">TERLAMBAT</option>
+                    <option value="DL">DINAS LUAR</option>
+                </select>
+                <button onclick="downloadExcel()" class="bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md active:scale-95">Download Excel</button>
+            </div>
+        </div>
+
+        <div class="rekap-wrapper border border-slate-100 shadow-sm mb-20">
+            <table class="rekap-table" id="table-admin">
+                <thead>
+                    <tr>
+                        <th>NAMA & NRPK</th>
+                        <th>TANGGAL</th>
+                        <th>MASUK - PULANG</th>
+                        <th>KETERANGAN</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-table-body">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="p-6 text-center border-t border-slate-100 bg-white">
+        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Adi.P - Barokah Dev & PT. ISB</p>
+        <p class="text-[8px] font-bold text-slate-300 mt-1">GARDENA V1.2.1 - ADMINISTRATOR MODE</p>
+    </div>
+</div>
+
+<script>
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyDeWZyUvXj3qVOZXviPgN-d42jswXgkm2cvYlA7OBgGSPX-G_rxYti_rJWGVdpmi_f2A/exec";
+    let state = { data: { logs: [], descriptors: [] } };
+
+    async function fetchData() {
+        document.getElementById('loading-overlay').style.display = 'flex';
+        try {
+            const res = await fetch(`${WEB_APP_URL}?action=getData`);
+            state.data = await res.json();
+            renderAdminRekap();
+        } catch (e) {
+            console.error(e);
+            alert("Gagal mengambil data dari server!");
+        } finally {
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+    }
+
+    async function refreshData(btn) {
+        btn.classList.add('spinning');
+        await fetchData();
+        setTimeout(() => btn.classList.remove('spinning'), 500);
+    }
+
+    function handleDateChange(val) {
+        if (val) {
+            const d = new Date(val);
+            document.getElementById('filter-bulan').value = (d.getMonth() + 1).toString().padStart(2, '0');
+            document.getElementById('filter-tahun').value = d.getFullYear().toString();
+        }
+        renderAdminRekap();
+    }
+
+    function clearDateFilter() {
+        document.getElementById('filter-tanggal').value = "";
+        renderAdminRekap();
+    }
+
+    // FIX BUG: Logika format waktu agar tidak muncul tahun 1899
+    function formatTime(raw) {
+        if (!raw || raw === '-') return "-";
+        
+        // Jika data berupa string waktu langsung (contoh: "07:30")
+        const timeStr = raw.toString();
+        if (timeStr.includes(':') || timeStr.includes('.')) {
+            const parts = timeStr.replace('.', ':').split(':');
+            if (parts.length >= 2) {
+                return parts[0].padStart(2, '0') + ":" + parts[1].substring(0, 2).padStart(2, '0');
+            }
+        }
+
+        try {
+            const date = new Date(raw);
+            // Validasi jika objek Date valid dan bukan Epoch (1899/1900)
+            if (!isNaN(date.getTime()) && date.getFullYear() > 1900) {
+                return date.toLocaleTimeString('id-ID', { 
+                    hour: '2-digit', 
+                    minute: '2-digit', 
+                    hour12: false 
+                }).replace('.', ':');
+            }
+        } catch (e) {
+            console.error("Format error", e);
+        }
+        
+        return "-";
+    }
+
+    function renderAdminRekap() {
+        const tbody = document.getElementById('admin-table-body');
+        const fTanggal = document.getElementById('filter-tanggal').value;
+        const fBulan = document.getElementById('filter-bulan').value;
+        const fTahun = document.getElementById('filter-tahun').value;
+        const fStatus = document.getElementById('filter-status').value;
+        const fSearch = document.getElementById('search-admin').value.toLowerCase();
+
+        const grouped = {};
+        let countHadir = 0, countTelat = 0, countDL = 0;
+
+        let formattedDateFilter = "";
+        if (fTanggal) {
+            const d = new Date(fTanggal);
+            formattedDateFilter = `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+        }
+
+        state.data.logs.forEach(l => {
+            const dParts = l.date.split('/');
+            if (dParts.length < 3) return;
+            const logDay = dParts[0].padStart(2, '0');
+            const logMonth = dParts[1].padStart(2, '0');
+            const logYear = dParts[2];
+
+            if (fTanggal) {
+                if (l.date !== formattedDateFilter) return;
+            } else {
+                if (logMonth !== fBulan || logYear !== fTahun) return;
+            }
+            
+            if (fSearch && !l.name.toLowerCase().includes(fSearch)) return;
+
+            const key = `${l.date}_${l.name}`;
+            if (!grouped[key]) {
+                const off = state.data.descriptors.find(d => d.name === l.name);
+                grouped[key] = {
+                    name: l.name,
+                    nip: off ? off.nip : '-',
+                    date: l.date,
+                    masuk: '-',
+                    pulang: '-',
+                    status: 'HADIR',
+                    note: '-',
+                    typeRaw: l.type, // Identifikasi tipe awal
+                    timestamp: new Date(logYear, parseInt(logMonth)-1, parseInt(logDay)).getTime()
+                };
+            }
+
+            // Aturan khusus: Jika DL, jam masuk/pulang adalah tanda minus
+            if (l.type === 'DL' || grouped[key].typeRaw === 'DL') {
+                grouped[key].status = 'DL';
+                grouped[key].masuk = '-';
+                grouped[key].pulang = '-';
+                grouped[key].note = l.note || 'DINAS LUAR';
+            } else {
+                const time = formatTime(l.time);
+                if (l.type === 'MASUK') {
+                    grouped[key].masuk = time;
+                    if (l.status && l.status.includes('TERLAMBAT')) {
+                        grouped[key].status = 'TERLAMBAT';
+                        grouped[key].note = l.status;
+                    }
+                }
+                if (l.type === 'PULANG') grouped[key].pulang = time;
+            }
+        });
+
+        const resultArr = Object.values(grouped).sort((a, b) => b.timestamp - a.timestamp);
+        
+        const finalDisplay = resultArr.filter(r => {
+            if (r.status === 'HADIR') countHadir++;
+            if (r.status === 'TERLAMBAT') countTelat++;
+            if (r.status === 'DL') countDL++;
+
+            if (fStatus !== 'SEMUA' && r.status !== fStatus) return false;
+            return true;
+        });
+
+        document.getElementById('stat-total').innerText = finalDisplay.length;
+        document.getElementById('stat-hadir').innerText = countHadir;
+        document.getElementById('stat-telat').innerText = countTelat;
+        document.getElementById('stat-dl').innerText = countDL;
+
+        tbody.innerHTML = finalDisplay.map(r => `
+            <tr>
+                <td>
+                    <p class="font-black text-slate-800">${r.name}</p>
+                    <p class="text-[8px] text-slate-400">NRPK. ${r.nip}</p>
+                </td>
+                <td>${r.date}</td>
+                <td class="font-black text-pink-600 text-center">${r.masuk} ${r.masuk === '-' && r.pulang === '-' ? '' : ' - '} ${r.pulang}</td>
+                <td>
+                    <span class="status-badge ${r.status === 'HADIR' ? 'badge-hadir' : r.status === 'DL' ? 'badge-dl' : 'badge-terlambat'}">
+                        ${r.status === 'TERLAMBAT' ? r.note : r.status}
+                    </span>
+                    ${r.status === 'DL' ? `<p class="text-[8px] mt-1 italic text-slate-400">${r.note}</p>` : ''}
+                </td>
+            </tr>
+        `).join('') || '<tr><td colspan="4" class="text-center py-20 text-slate-300 font-bold uppercase">Tidak ada data untuk periode ini</td></tr>';
+    }
+
+    function downloadExcel() {
+        const table = document.getElementById('table-admin');
+        const wb = XLSX.utils.table_to_book(table, { sheet: "REKAP_ADMIN_GARDENA" });
+        XLSX.writeFile(wb, `REKAP_ADMIN_${new Date().getTime()}.xlsx`);
+    }
+
+    window.onload = () => {
+        const now = new Date();
+        document.getElementById('filter-bulan').value = (now.getMonth() + 1).toString().padStart(2, '0');
+        document.getElementById('filter-tahun').value = now.getFullYear().toString();
+        fetchData();
+    };
+</script>
+
+</body>
+</html>

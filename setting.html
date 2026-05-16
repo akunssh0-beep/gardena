@@ -132,13 +132,19 @@
             background: #f1f5f9; color: #64748b; text-transform: uppercase;
         }
         .tab-btn.active { background: #db2777; color: white; }
+
+        .range-container { margin-top: 15px; padding-top: 15px; border-top: 1px dashed #f1f5f9; }
+        
+        .badge-info {
+            background: #eff6ff; color: #3b82f6; padding: 4px 8px; border-radius: 6px; font-size: 8px; font-weight: 800; text-transform: uppercase;
+        }
     </style>
 </head>
 <body>
 
 <div id="modal-auth">
     <div class="w-full max-w-sm text-center space-y-6">
-        <div class="w-20 h-20 bg-pink-100 text-pink-600 rounded-3xl flex items-center justify-center text-3xl mx-auto shadow-inner">🔐</div>
+        <div class="w-20 h-20 bg-pink-100 text-pink-600 rounded-3xl flex items-center justify-center text-3xl mx-auto shadow-inner">👤</div>
         <div>
             <h2 class="text-2xl font-black text-slate-800 tracking-tight">Admin Access</h2>
             <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">GARDENA - KOTABARU</p>
@@ -149,7 +155,7 @@
                    placeholder="•••••" oninput="checkPass(this.value)">
             <p id="error-msg" class="text-[10px] font-bold text-red-500 uppercase hidden">Sandi Tidak Sesuai!</p>
         </div>
-        <button onclick="location.href='index.html'" class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] opacity-60">⬅ Kembali ke Aplikasi</button>
+        <button onclick="location.href='index.html'" class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] opacity-60">⬅️ Kembali ke Aplikasi</button>
     </div>
 </div>
 
@@ -161,11 +167,11 @@
 <div class="app-container">
     <div class="pink-header p-6 text-white text-center shadow-lg">
         <div class="flex items-center justify-between mb-2">
-            <button onclick="location.href='index.html'" class="w-8 h-8 flex items-center justify-center bg-white/20 rounded-xl text-sm active:scale-90">⬅</button>
+            <button onclick="location.href='index.html'" class="w-8 h-8 flex items-center justify-center bg-white/20 rounded-xl text-sm active:scale-90">🏠</button>
             <h2 class="text-xl font-black tracking-tighter">CONTROL PANEL</h2>
             <button onclick="window.open('https://script.google.com/home', '_blank')" class="text-[10px] bg-white/20 px-3 py-1.5 rounded-lg font-black uppercase active:scale-95">Cloud</button>
         </div>
-        <p class="text-[9px] font-bold opacity-70 uppercase tracking-[0.2em]">Management Systems v1.2</p>
+        <p class="text-[9px] font-bold opacity-70 uppercase tracking-[0.2em]">Management Systems v1.2.1</p>
     </div>
 
     <div class="scroll-content">
@@ -184,7 +190,7 @@
 
         <div class="glass-card">
             <div class="flex items-center gap-3 mb-5 border-b border-slate-50 pb-3">
-                <span class="text-xl">⚙️</span>
+                <span class="text-xl">⚙️⚡</span>
                 <h3 class="font-extrabold text-slate-800 text-sm uppercase">Saklar Fitur</h3>
             </div>
             <div class="space-y-4">
@@ -200,12 +206,77 @@
                     <label class="input-label mb-0">Bypass GPS (Darurat)</label>
                     <label class="switch"><input type="checkbox" id="toggle-gps"><span class="slider"></span></label>
                 </div>
+                <div class="flex justify-between items-center mt-4 pt-4 border-t border-slate-50">
+                    <div>
+                        <label class="input-label mb-0">Auto Deteksi Petugas</label>
+                        <p class="text-[7px] font-bold text-slate-400 uppercase">Aktifkan pelacakan otomatis & Anti-Fake GPS</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="toggle-auto-detect">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card border-l-4 border-pink-500">
+            <div class="flex items-center justify-between mb-5 border-b border-slate-50 pb-3">
+                <div class="flex items-center gap-3">
+                    <span class="text-xl">🎯</span>
+                    <h3 class="font-extrabold text-slate-800 text-sm uppercase">Sensitivitas AI Wajah</h3>
+                </div>
+                <span class="badge-info">Face-API.js</span>
+            </div>
+            
+            <div class="space-y-6">
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <div>
+                            <label class="input-label mb-0">Akurasi Verifikasi Login</label>
+                            <p class="text-[7px] font-bold text-slate-400 uppercase">Digunakan saat masuk akun / switch user</p>
+                        </div>
+                        <span id="val-accuracy-login" class="text-pink-600 font-black text-sm">0.1</span>
+                    </div>
+                    <input type="range" id="set-accuracy-login" min="0.05" max="0.6" step="0.05" value="0.1" 
+                           class="accent-pink-600 w-full cursor-pointer h-1.5 bg-slate-100 rounded-lg appearance-none" 
+                           oninput="document.getElementById('val-accuracy-login').innerText = this.value">
+                </div>
+
+                <div class="range-container">
+                    <div class="flex items-center justify-between mb-2">
+                        <div>
+                            <label class="input-label mb-0">Akurasi Deteksi Absen</label>
+                            <p class="text-[7px] font-bold text-slate-400 uppercase">Digunakan saat scan presensi masuk/pulang</p>
+                        </div>
+                        <span id="val-accuracy-absen" class="text-indigo-600 font-black text-sm">0.1</span>
+                    </div>
+                    <input type="range" id="set-accuracy-absen" min="0.05" max="0.6" step="0.05" value="0.1" 
+                           class="accent-indigo-600 w-full cursor-pointer h-1.5 bg-slate-100 rounded-lg appearance-none" 
+                           oninput="document.getElementById('val-accuracy-absen').innerText = this.value">
+                </div>
+            </div>
+            
+            <div class="mt-6 p-4 bg-slate-50 rounded-2xl space-y-3">
+                <h4 class="text-[9px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                    <span>💡</span> Panduan Pengaturan Jarak (Threshold)
+                </h4>
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="p-2 bg-white rounded-xl border border-slate-100">
+                        <p class="text-pink-600 font-black text-[9px]">0.05 - 0.15</p>
+                        <p class="text-[7px] font-bold text-slate-400 uppercase">SANGAT SENSITIF: Mudah mengenali wajah, cocok untuk HP spesifikasi rendah/pencahayaan minim.</p>
+                    </div>
+                    <div class="p-2 bg-white rounded-xl border border-slate-100">
+                        <p class="text-slate-800 font-black text-[9px]">0.20 - 0.40</p>
+                        <p class="text-[7px] font-bold text-slate-400 uppercase">STANDAR: Keseimbangan antara keamanan dan kemudahan penggunaan di lapangan.</p>
+                    </div>
+                </div>
+                <p class="text-[7px] text-slate-400 font-medium italic">* Nilai menunjukkan "Euclidean Distance". Semakin kecil angkanya, semakin toleran AI terhadap kemiripan wajah.</p>
             </div>
         </div>
 
         <div class="glass-card">
             <div class="flex items-center gap-3 mb-5 border-b border-slate-50 pb-3">
-                <span class="text-xl">🕒</span>
+                <span class="text-xl">📅</span>
                 <h3 class="font-extrabold text-slate-800 text-sm uppercase">Jadwal Shift Kerja</h3>
             </div>
             
@@ -271,7 +342,7 @@
 
         <div class="glass-card">
             <div class="flex items-center gap-3 mb-5 border-b border-slate-50 pb-3">
-                <span class="text-xl">📅</span>
+                <span class="text-xl">🏝️</span>
                 <h3 class="font-extrabold text-slate-800 text-sm uppercase">Hari Kerja & Libur</h3>
             </div>
             <div class="space-y-4">
@@ -284,15 +355,6 @@
                 </div>
                 <button onclick="toggleHoliday()" id="btn-holiday" class="w-full py-3 rounded-xl border-2 border-dashed border-slate-200 text-[10px] font-black uppercase text-slate-400 hover:border-pink-200 hover:text-pink-500">Aktifkan Mode Libur Nasional</button>
             </div>
-        </div>
-
-        <div class="glass-card">
-            <div class="flex items-center justify-between mb-2">
-                <h3 class="font-extrabold text-slate-800 text-[10px] uppercase">Akurasi Deteksi (AI)</h3>
-                <span id="val-accuracy" class="text-pink-600 font-black text-sm">0.1</span>
-            </div>
-            <input type="range" id="set-accuracy" min="0.1" max="0.8" step="0.05" value="0.1" class="accent-pink-600 w-full cursor-pointer" oninput="document.getElementById('val-accuracy').innerText = this.value">
-            <p class="text-[8px] text-slate-400 mt-2 font-bold uppercase leading-relaxed">Nilai 0.1: Sensitif (Mudah) | Nilai 0.8: Ketat (Sulit)</p>
         </div>
 
         <div class="glass-card">
@@ -338,7 +400,7 @@
         </div>
 
         <div class="mt-2 mb-10">
-            <button onclick="saveAllSettings()" class="btn-primary uppercase text-xs">Simpan Perubahan ✨</button>
+            <button onclick="saveAllSettings()" class="btn-primary uppercase text-xs">Simpan Perubahan ✅</button>
             <p class="text-center text-[8px] font-bold text-slate-300 mt-4 uppercase tracking-[0.2em]">Adi.P Founder - it.barokah.net</p>
         </div>
     </div>
@@ -380,10 +442,17 @@
             document.getElementById('set-lng').value = config.LNG || "116.203609";
             document.getElementById('set-radius').value = config.RADIUS || "100";
             document.getElementById('set-qr').value = config.QR_TEXT || "PKM-SAMPANAHAN";
-            document.getElementById('set-accuracy').value = config.THRESHOLD || "0.1";
-            document.getElementById('val-accuracy').innerText = config.THRESHOLD || "0.1";
             
-            // Map Shift Jam Kerja (Jika ada di config)
+            // Map Akurasi Ganda (Login & Absen)
+            const accLogin = config.THRESHOLD_LOGIN || config.THRESHOLD || "0.1";
+            const accAbsen = config.THRESHOLD_ABSEN || config.THRESHOLD || "0.1";
+            
+            document.getElementById('set-accuracy-login').value = accLogin;
+            document.getElementById('val-accuracy-login').innerText = accLogin;
+            document.getElementById('set-accuracy-absen').value = accAbsen;
+            document.getElementById('val-accuracy-absen').innerText = accAbsen;
+            
+            // Map Shift Jam Kerja
             if(config.SHIFT_DATA) {
                 const sd = JSON.parse(config.SHIFT_DATA);
                 document.getElementById('in-start-reg').value = sd.reg.inStart;
@@ -403,6 +472,13 @@
             document.getElementById('toggle-reg').checked = config.ALLOW_REG === true || config.ALLOW_REG === "true";
             document.getElementById('toggle-mt').checked = config.MAINTENANCE === true || config.MAINTENANCE === "true";
             document.getElementById('toggle-gps').checked = config.BYPASS_GPS === true || config.BYPASS_GPS === "true";
+            
+            // MAP SAKLAR BARU
+            document.getElementById('toggle-auto-detect').checked = config.AUTO_DETECT === true || config.AUTO_DETECT === "true";
+
+            // SINKRONISASI STATUS LIBUR DARI DB
+            const isHolidayDb = config.IS_HOLIDAY === true || config.IS_HOLIDAY === "true";
+            updateHolidayUI(isHolidayDb);
 
             renderUserList(res.officers);
             renderAuditLog(config.LAST_UPDATE);
@@ -492,17 +568,25 @@
             }
         };
 
+        // CEK STATUS TOMBOL LIBUR SAAT INI
+        const btnHoliday = document.getElementById('btn-holiday');
+        const statusLibur = btnHoliday.classList.contains('bg-red-50');
+
         const payload = {
             LAT: document.getElementById('set-lat').value,
             LNG: document.getElementById('set-lng').value,
             RADIUS: document.getElementById('set-radius').value,
             QR_TEXT: document.getElementById('set-qr').value,
-            THRESHOLD: document.getElementById('set-accuracy').value,
+            THRESHOLD_LOGIN: document.getElementById('set-accuracy-login').value,
+            THRESHOLD_ABSEN: document.getElementById('set-accuracy-absen').value,
+            THRESHOLD: document.getElementById('set-accuracy-absen').value, 
             ALLOW_REG: document.getElementById('toggle-reg').checked,
             MAINTENANCE: document.getElementById('toggle-mt').checked,
             BYPASS_GPS: document.getElementById('toggle-gps').checked,
+            AUTO_DETECT: document.getElementById('toggle-auto-detect').checked,
             WORK_DAYS: document.getElementById('set-work-days').value,
             SHIFT_DATA: JSON.stringify(shiftData),
+            IS_HOLIDAY: statusLibur, // VARIABEL BARU DISIMPAN KE DATABASE
             LAST_UPDATE: new Date().toLocaleString('id-ID')
         };
 
@@ -510,8 +594,8 @@
             const response = await fetch(`${WEB_APP_URL}?action=updateConfig&data=${encodeURIComponent(JSON.stringify(payload))}`);
             const result = await response.json();
             if (result.status === "success") { 
-                alert('Sistem Berhasil Diperbarui! ✨'); 
-                location.href = 'index.html'; 
+                alert('Sistem Berhasil Diperbarui! ✅'); 
+                loadCurrentConfig(); // Refresh data setelah simpan
             }
         } catch (e) { 
             alert('Gagal Menyimpan Ke Cloud.'); 
@@ -520,12 +604,19 @@
         }
     }
 
+    // Fungsi Toggle Tombol (Hanya visual sementara sebelum ditekan Simpan Perubahan)
     function toggleHoliday() {
         const btn = document.getElementById('btn-holiday');
-        const isHoliday = btn.classList.contains('bg-red-50');
-        if(!isHoliday) {
+        const currentlyActive = btn.classList.contains('bg-red-50');
+        updateHolidayUI(!currentlyActive);
+    }
+
+    // Fungsi Helper untuk Update Tampilan Tombol
+    function updateHolidayUI(isActive) {
+        const btn = document.getElementById('btn-holiday');
+        if(isActive) {
             btn.classList.add('bg-red-50', 'text-red-500', 'border-red-200');
-            btn.innerText = "🔴 MODE LIBUR AKTIF (ABSEN MATI)";
+            btn.innerText = "🛑 MODE LIBUR AKTIF (ABSEN MATI)";
         } else {
             btn.classList.remove('bg-red-50', 'text-red-500', 'border-red-200');
             btn.innerText = "Aktifkan Mode Libur Nasional";

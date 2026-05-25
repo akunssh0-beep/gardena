@@ -53,7 +53,7 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow: hidden;
             padding-left: var(--sal);
             padding-right: var(--sar);
-            position: fixed; /* Kunci container utama agar tidak memantul di iOS */
+            position: fixed; 
             top: 0;
             bottom: 0;
             left: 50%;
@@ -202,7 +202,7 @@
         .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(6px); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 24px; }
         .modal-card { background: var(--card-bg); width: 100%; max-width: 400px; border-radius: 28px; overflow: hidden; margin-bottom: var(--sab); }
         
-        .scanner-container { position: relative; width: 100%; aspect-ratio: 1/1; background: #000; border-radius: 20px; overflow: hidden; display: flex; align-items: center; justify-content: center; z-index: 1; }
+        .scanner-container { position: relative; width: 100%; aspect-ratio: 1/1; background: #050515; border-radius: 24px; overflow: hidden; display: flex; align-items: center; justify-content: center; z-index: 1; box-shadow: inset 0 0 40px rgba(0,0,0,0.8); }
         
         #video-preview, #video-register, #video-absensi { 
             position: absolute; 
@@ -210,28 +210,72 @@
             height: 100%; 
             object-fit: cover; 
             transform: scaleX(-1); 
-            border-radius: 20px; 
+            border-radius: 24px; 
             z-index: 5;
             transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
+        /* TAMPILAN BARU SCANNER JAUH LEBIH PREMIUM */
         .face-guide {
-            position: absolute; inset: 0; z-index: 15; border: 4px solid rgba(255,255,255,0.1); border-radius: 20px;
+            position: absolute; inset: 0; z-index: 15; border: 4px solid rgba(15, 23, 42, 0.3); border-radius: 24px;
             display: flex; align-items: center; justify-content: center; pointer-events: none;
         }
         .face-oval {
-            width: 65%; height: 75%; border: 3px dashed rgba(255,255,255,0.5); border-radius: 50% 50% 45% 45%;
-            position: relative; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            width: 65%; height: 75%; border: 3px dashed rgba(255, 255, 255, 0.4); border-radius: 50% 50% 45% 45%;
+            position: relative; transition: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 0 0 1000px rgba(15, 23, 42, 0.4);
         }
-        .face-oval.valid { border-color: #10b981; border-style: solid; box-shadow: 0 0 25px rgba(16, 185, 129, 0.4); transform: scale(1.02); }
-        .face-oval.invalid { border-color: #ef4444; border-style: dashed; }
+        .face-oval.valid { 
+            border-color: #10b981; 
+            border-style: solid; 
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.6), 0 0 0 1000px rgba(15, 23, 42, 0.2); 
+            transform: scale(1.02);
+            animation: pulseSuccess 1s infinite alternate;
+        }
+        .face-oval.invalid { 
+            border-color: #ef4444; 
+            border-style: dashed;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4), 0 0 0 1000px rgba(15, 23, 42, 0.4);
+        }
 
-        .scanner-overlay {
-            position: absolute; inset: 0; z-index: 10; pointer-events: none;
-            display: flex; align-items: center; justify-content: center;
+        @keyframes pulseSuccess {
+            0% { border-color: #10b981; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4), 0 0 0 1000px rgba(15, 23, 42, 0.2); }
+            100% { border-color: #34d399; box-shadow: 0 0 35px rgba(52, 211, 153, 0.8), 0 0 0 1000px rgba(15, 23, 42, 0.2); }
         }
-        .corner-svg { width: 70%; height: 70%; stroke: white; stroke-width: 4; fill: none; opacity: 0.8; animation: pulse-border 2s infinite ease-in-out; }
-        @keyframes pulse-border { 0%, 100% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.05); opacity: 1; } }
+
+        .scanner-frame-corners {
+            position: absolute; inset: 16px; z-index: 18; pointer-events: none;
+        }
+        .scanner-frame-corners::before, .scanner-frame-corners::after,
+        .scanner-frame-corners span::before, .scanner-frame-corners span::after {
+            content: ""; position: absolute; width: 24px; height: 24px; border-color: rgba(255, 255, 255, 0.6); stroke-width: 3px; border-style: solid; transition: 0.3s;
+        }
+        .face-oval.valid ~ .scanner-frame-corners::before { border-color: #10b981; }
+        .face-oval.valid ~ .scanner-frame-corners::after { border-color: #10b981; }
+        .face-oval.valid ~ .scanner-frame-corners span::before { border-color: #10b981; }
+        .face-oval.valid ~ .scanner-frame-corners span::after { border-color: #10b981; }
+
+        /* Top Left */ .scanner-frame-corners::before { top: 0; left: 0; border-width: 3px 0 0 3px; border-radius: 8px 0 0 0; }
+        /* Top Right */ .scanner-frame-corners::after { top: 0; right: 0; border-width: 3px 3px 0 0; border-radius: 0 8px 0 0; }
+        /* Bottom Left */ .scanner-frame-corners span::before { bottom: 0; left: 0; border-width: 0 0 3px 3px; border-radius: 0 0 0 8px; }
+        /* Bottom Right */ .scanner-frame-corners span::after { bottom: 0; right: 0; border-width: 0 3px 3px 0; border-radius: 0 0 8px 0; }
+
+        .scanning-line { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 4px; 
+            background: linear-gradient(90deg, transparent, #db2777, #6366f1, transparent); 
+            box-shadow: 0 0 20px #db2777, 0 0 10px #6366f1; 
+            animation: scanWave 2.5s ease-in-out infinite; 
+            z-index: 12; display: none; opacity: 0.8;
+        }
+        .face-oval.valid ~ .scanning-line {
+            background: linear-gradient(90deg, transparent, #10b981, #34d399, transparent);
+            box-shadow: 0 0 20px #10b981;
+        }
+        @keyframes scanWave {
+            0% { top: 5%; }
+            50% { top: 90%; }
+            100% { top: 5%; }
+        }
 
         #custom-alert { position: fixed; top: calc(24px + var(--sat)); left: 50%; transform: translateX(-50%) translateY(-150%); width: 85%; max-width: 360px; background: var(--card-bg); z-index: 2000; padding: 18px 24px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 14px; transition: 0.4s; opacity: 0; border: 1px solid var(--border-color); }
         #custom-alert.show { transform: translateX(-50%) translateY(0); opacity: 1; }
@@ -271,7 +315,6 @@
         @keyframes bounceFAB { 0%, 20%, 50%, 80%, 100% {transform: translateX(-50%) translateY(0);} 40% {transform: translateX(-50%) translateY(-10px);} 60% {transform: translateX(-50%) translateY(-5px);} }
 
         .rekap-wrapper { width: 100%; overflow-x: auto; border-radius: 20px; }
-        .rekap-wrapper bg-white border border-slate-100 shadow-sm { width: 100%; overflow-x: auto; border-radius: 20px; }
         .rekap-table { width: 100%; border-collapse: collapse; font-size: 10px; min-width: 500px; }
         .rekap-table th { background: #f8fafc; padding: 12px 8px; text-align: left; border-bottom: 2px solid #e2e8f0; color: #64748b; font-weight: 800; text-transform: uppercase; white-space: nowrap; }
         .rekap-table td { padding: 12px 8px; border-bottom: 1px solid #f1f5f9; color: var(--text-main); font-weight: 600; white-space: nowrap; }
@@ -326,9 +369,6 @@
             margin-bottom: 12px;
             border-radius: 18px;
         }
-
-        .scanning-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: rgba(219, 39, 119, 0.7); box-shadow: 0 0 15px #db2777; animation: scan 2s linear infinite; z-index: 100; display: none; }
-        @keyframes scan { from { top: 0; } to { top: 100%; } }
 
         #geo-info { background: #f8fafc; border-radius: 24px; padding: 16px; margin-top: 10px; border: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center; gap: 8px; }
         .signal-container { display: flex; align-items: flex-end; gap: 3px; height: 16px; }
@@ -408,7 +448,6 @@
         .nav-icon { width: 22px; height: 22px; }
         .log-icon { width: 18px; height: 18px; }
 
-        /* Styles for Shift Detail Card */
         .shift-detail-card {
             background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
             border: 1px solid #e2e8f0;
@@ -434,7 +473,6 @@
         .shift-value { font-size: 11px; font-weight: 900; color: var(--text-main); }
         .shift-value.highlight { color: var(--primary); }
 
-        /* Badge Session Indicator */
         .session-badge {
             display: inline-flex;
             align-items: center;
@@ -459,7 +497,6 @@
         .dot-blink { width: 5px; height: 5px; border-radius: 50%; background: white; animation: blink 1s infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-        /* NEW ADDITIONS FOR REFRESH */
         .progress-ring {
             position: relative;
             width: 32px;
@@ -497,6 +534,13 @@
             min-width: 48%;
         }
 
+        .grid-capsule-stat {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
         .gps-pill {
             background: rgba(16, 185, 129, 0.2);
             backdrop-filter: blur(10px);
@@ -506,7 +550,6 @@
             box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
         }
 
-        /* NEW CSS FOR TOP GEOFENCING INDICATOR */
         .top-geofencing-banner {
             width: 100%;
             background: #f8fafc;
@@ -541,13 +584,10 @@
             50% { transform: scale(1.3); opacity: 0.5; }
             100% { transform: scale(1); opacity: 1; }
         }
-        /* Pastikan video awalnya transparan */
         #video-preview, #video-register {
             opacity: 0;
             transition: opacity 0.5s ease-in-out;
         }
-
-        /* Class untuk menampilkan video */
         #video-preview.visible, #video-register.visible {
             opacity: 1;
         }
@@ -614,7 +654,6 @@
         <div id="view-login" class="view-content active">
             <div class="pink-header anim-header p-6 pb-16 text-white text-center">
                 <div class="absolute right-4" style="top: calc(1rem + var(--sat));">
-                    <button onclick="refreshData(this)" class="btn-sync">🔄</button>
                 </div>
                 <p class="text-[8px] font-bold opacity-60 uppercase mb-1">🏥 UPTD Puskesmas Sampanahan</p>
                 <h2 class="text-3xl font-black tracking-tighter">GARDENA</h2>
@@ -630,11 +669,11 @@
                         <option value="">-- Menu Khusus --</option>
                     </select>
                     
-                    <button id="btn-login-trigger" onclick="startFaceAuth('LOGIN')" class="btn-primary anim-btn text-xs uppercase w-full">Scan Wajah & Masuk ✨</button>
+                    <button id="btn-login-trigger" onclick="startFaceAuth('LOGIN')" class="btn-primary anim-btn text-xs uppercase w-full">Scan Wajah & Masuk</button>
                 </div>
             </div>
             <div class="app-footer anim-card" style="border:none; background:transparent;">
-                <span class="version-tag">VER 1.2.5</span>
+                <span class="version-tag">VER 1.2.8</span>
                 <p class="brand-text">
                     Adi.P Founder & Head of Developer<br>
                     <span id="trigger-admin" class="text-pink-600 font-black cursor-pointer select-none" onclick="handleAdminTrigger()">BAROKAH DEV</span><br>
@@ -784,7 +823,7 @@
                 </div>
                 
                 <div class="app-footer" style="border:none; padding-bottom: 40px; background:transparent;">
-                    <span class="version-tag">VER 1.2.5</span>
+                    <span class="version-tag">VER 1.2.8</span>
                     <p class="brand-text">
                         Adi.P Founder & Head of Developer<br>
                         <span class="text-pink-600 font-black tracking-widest">BAROKAH DEV</span>
@@ -801,7 +840,6 @@
                         <p class="text-[10px] text-slate-400 font-bold uppercase mb-4">Aktivitas Saya Bulan Ini</p>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="refreshData(this)" class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center shadow-sm border border-slate-200">🔄</button>
                         <button onclick="downloadExcel()" class="bg-emerald-500 text-white p-3 rounded-xl text-[10px] font-bold shadow-lg flex items-center gap-2">
                             EXCEL
                         </button>
@@ -842,7 +880,21 @@
                         </select>
                     </div>
                     <div class="relative">
-                        <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl text-[11px] font-bold text-slate-400 uppercase text-center">Data Terfilter: <span id="rekap-owner-name" class="text-pink-600">User</span></div>
+                    </div>
+                </div>
+
+                <div class="grid-capsule-stat">
+                    <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-3 text-center">
+                        <p class="text-[7px] font-black text-emerald-500 uppercase tracking-wider">Tepat Waktu</p>
+                        <p id="stat-hadir" class="text-base font-black text-emerald-700 mt-0.5">0</p>
+                    </div>
+                    <div class="bg-rose-50 border border-rose-100 rounded-2xl p-3 text-center">
+                        <p class="text-[7px] font-black text-rose-500 uppercase tracking-wider">Terlambat</p>
+                        <p id="stat-terlambat" class="text-base font-black text-rose-700 mt-0.5">0</p>
+                    </div>
+                    <div class="bg-amber-50 border border-amber-100 rounded-2xl p-3 text-center">
+                        <p class="text-[7px] font-black text-amber-500 uppercase tracking-wider">Khusus (DL/Izin)</p>
+                        <p id="stat-khusus" class="text-base font-black text-amber-700 mt-0.5">0</p>
                     </div>
                 </div>
 
@@ -861,7 +913,7 @@
                 </div>
 
                 <div class="app-footer" style="border:none; padding-bottom: 40px; background: transparent;">
-                    <span class="version-tag">VER 1.2.5</span>
+                    <span class="version-tag">VER 1.2.8</span>
                     <p class="brand-text">Adi.P - Barokah Dev</p>
                 </div>
             </div>
@@ -990,14 +1042,26 @@
 
 <div id="modal-dl" class="modal-overlay">
     <div class="modal-card">
-        <div class="pink-header p-6 text-white text-center"><h3 class="font-black uppercase text-sm">Input Dinas Luar</h3></div>
+        <div class="pink-header p-6 text-white text-center">
+            <h3 class="font-black uppercase text-sm">Pengajuan Status Khusus</h3>
+        </div>
         <div class="p-6 space-y-4">
             <div class="text-center">
-                <span class="text-3xl">💼</span>
-                <p class="text-[9px] text-slate-400 font-black uppercase mt-2">Keterangan Tugas Luar</p>
+                <span class="text-3xl">📝</span>
+                <p class="text-[9px] text-slate-400 font-black uppercase mt-2">Pilih Jenis Status & Keterangan</p>
             </div>
-            <textarea id="dl-keterangan" class="w-full p-4 bg-slate-50 border rounded-xl text-xs font-bold focus:border-pink-500 outline-none" rows="3" placeholder="Contoh: Pendampingan Posyandu..."></textarea>
-            <button id="btn-dl-submit" onclick="processDL()" class="btn-primary text-[10px] uppercase">KIRIM PRESENSI DL ✨</button>
+            
+            <select id="dl-status-tipe" class="w-full p-4 bg-slate-50 border rounded-xl text-xs font-bold focus:border-pink-500 outline-none">
+                <option value="">-- PILIH STATUS --</option>
+                <option value="DL">DINAS LUAR (DL)</option>
+                <option value="CUTI">CUTI</option>
+                <option value="IJIN">IJIN KEPERLUAN</option>
+                <option value="SAKIT">SAKIT</option>
+            </select>
+
+            <textarea id="dl-keterangan" class="w-full p-4 bg-slate-50 border rounded-xl text-xs font-bold focus:border-pink-500 outline-none" rows="3" placeholder="Tulis alasan detail atau lokasi dinas..."></textarea>
+            
+            <button id="btn-dl-submit" onclick="processDL()" class="btn-primary text-[10px] uppercase">KIRIM PRESENSI STATUS ✨</button>
             <button onclick="closeDLModal()" class="w-full text-[9px] font-bold text-slate-400 uppercase">Batal</button>
         </div>
     </div>
@@ -1008,11 +1072,14 @@
         <div class="pink-header p-6 text-white text-center"><h3 id="face-modal-title" class="font-black uppercase text-sm">Verifikasi Wajah</h3></div>
         <div class="p-6 relative">
             <div class="scanner-container relative">
-                <div class="face-guide" style="z-index: 20;"><div id="login-oval" class="face-oval"></div></div>
-                <div id="face-scanner-line" class="scanning-line"></div>
-                <video id="video-preview" autoplay playsinline muted style="z-index: 5;"></video>
+                <video id="video-preview" autoplay playsinline muted></video>
+                <div class="face-guide">
+                    <div id="login-oval" class="face-oval"></div>
+                    <div class="scanner-frame-corners"><span></span></div>
+                    <div id="face-scanner-line" class="scanning-line"></div>
+                </div>
             </div>
-            <p id="face-status-text" class="text-[8px] text-center mt-4 font-bold text-slate-400 uppercase">Menyiapkan Kamera...</p>
+            <p id="face-status-text" class="text-[9px] text-center mt-4 font-black text-slate-500 tracking-wider uppercase bg-slate-100 py-2 rounded-xl transition-all">Menyiapkan Kamera...</p>
             <button id="btn-face-action" onclick="confirmFaceAuth()" class="btn-primary mt-4 text-[10px]" disabled>MENUNGGU WAJAH...</button>
             <button onclick="closeFaceModal()" class="w-full mt-4 text-[9px] font-bold text-slate-400 uppercase">Batal</button>
         </div>
@@ -1026,11 +1093,14 @@
             <input type="text" id="reg-nama" class="w-full p-4 bg-slate-50 border rounded-xl text-xs font-bold" placeholder="Nama Lengkap">
             <input type="text" id="reg-nip" class="w-full p-4 bg-slate-50 border rounded-xl text-xs font-bold" placeholder="NRPK (Bebas Huruf & Angka)">
             <div class="scanner-container relative">
-                <div class="face-guide" style="z-index: 20;"><div id="reg-oval" class="face-oval"></div></div>
-                <div id="reg-scanner-line" class="scanning-line"></div>
-                <video id="video-register" autoplay playsinline muted style="z-index: 5;"></video>
+                <video id="video-register" autoplay playsinline muted></video>
+                <div class="face-guide">
+                    <div id="reg-oval" class="face-oval"></div>
+                    <div class="scanner-frame-corners"><span></span></div>
+                    <div id="reg-scanner-line" class="scanning-line"></div>
+                </div>
             </div>
-            <p id="reg-status-text" class="text-[8px] text-center font-bold text-slate-400 uppercase">Arahkan Wajah ke Kamera</p>
+            <p id="reg-status-text" class="text-[9px] text-center font-black text-slate-500 tracking-wider uppercase bg-slate-100 py-2 rounded-xl transition-all">Arahkan Wajah ke Kamera</p>
             <button id="btn-reg-save" onclick="processRegister()" class="btn-primary text-[10px]" disabled>SIMPAN DATA ✨</button>
             <button onclick="closeRegister()" class="w-full text-[9px] font-bold text-slate-400">KEMBALI</button>
         </div>
@@ -1053,7 +1123,7 @@
 </div>
 
 <script>
-    const APP_VERSION = "1.2.5"; 
+    const APP_VERSION = "1.2.8"; 
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyDeWZyUvXj3qVOZXviPgN-d42jswXgkm2cvYlA7OBgGSPX-G_rxYti_rJWGVdpmi_f2A/exec";
     
     let TARGET_LOC = { lat: -2.637013, lng: 116.203609, radius: 100 };
@@ -1158,20 +1228,17 @@
     }
 
     function startGeoMonitoring() {
-    if (!navigator.geolocation) return;
-    
-    // Ambil konfigurasi saklar AUTO_DETECT dari database
-    const cfg = state.data.config || {};
-    const autoDetectEnabled = cfg.AUTO_DETECT === true || cfg.AUTO_DETECT === "true";
-    
-    // Jika admin mematikan saklar Auto Deteksi, hentikan watchPosition untuk menghemat baterai nakes
-    if (!autoDetectEnabled && state.currentView !== 'profile') {
+        if (!navigator.geolocation) return;
+        
+        const cfg = state.data.config || {};
+        const autoDetectEnabled = cfg.AUTO_DETECT === true || cfg.AUTO_DETECT === "true";
+        
+        if (!autoDetectEnabled && state.currentView !== 'profile') {
+            if (state.geoWatchId) navigator.geolocation.clearWatch(state.geoWatchId);
+            return;
+        }
+
         if (state.geoWatchId) navigator.geolocation.clearWatch(state.geoWatchId);
-        return;
-    }
-
-    if (state.geoWatchId) navigator.geolocation.clearWatch(state.geoWatchId);
-
         
         const dotMain = document.getElementById('geo-dot-main');
         const textMain = document.getElementById('geo-text-main');
@@ -1184,7 +1251,6 @@
             
             if (limitMain) limitMain.innerText = `${TARGET_LOC.radius}M`;
             
-            // Update TOP Indikator
             if (dotMain && textMain && distMain) {
                 if (dist <= TARGET_LOC.radius) {
                     dotMain.className = "geo-dot-main active";
@@ -1199,7 +1265,6 @@
                 }
             }
 
-            // Update Old Profile Indikator (Status Pill)
             const profText = document.getElementById('profile-gps-text');
             const profDot = document.getElementById('profile-gps-dot');
             const gpsContainer = document.getElementById('gps-status-container');
@@ -1224,8 +1289,8 @@
             if(p) p.innerText = "OFFLINE"; 
         }, { 
             enableHighAccuracy: true,
-            timeout: 10000,       // Maksimal tunggu respons GPS 10 detik
-            maximumAge: 30000     // Izinkan menggunakan data posisi cache maksimal berumur 30 detik (menghemat baterai)
+            timeout: 10000,       
+            maximumAge: 30000     
         });
     }
 
@@ -1478,7 +1543,6 @@
             const outS = parse(data.outStart);
             const outE = parse(data.outEnd);
             
-            // Logika Status Sesi Real-Time
             if (badge && badgeText) {
                 badge.classList.remove('active', 'waiting', 'closed');
                 if (currentTime >= inS && currentTime <= inL) {
@@ -1601,11 +1665,14 @@
         const tbody = document.getElementById('rekap-table-body');
         const ownerNameEl = document.getElementById('rekap-owner-name');
         if(!tbody) return;
+        
         const filterBulan = document.getElementById('filter-bulan').value; 
         const filterTahun = document.getElementById('filter-tahun').value;
         const filterTanggal = document.getElementById('filter-tanggal').value; 
         const filterStatus = document.getElementById('filter-status').value;
+        
         if (ownerNameEl) ownerNameEl.innerText = state.user || "User";
+        
         const grouped = {};
         let formattedDateFilter = "";
         if (filterTanggal) {
@@ -1615,23 +1682,32 @@
             const yyyy = d.getFullYear();
             formattedDateFilter = `${dd}/${mm}/${yyyy}`;
         }
+
+        let countHadir = 0;
+        let countTerlambat = 0;
+        let countKhusus = 0;
+
         state.data.logs.forEach(l => {
             if (l.name !== state.user) return;
             const dateParts = l.date.split('/'); 
             if (dateParts.length < 3) return;
+            
             const logDay = dateParts[0].padStart(2, '0'); 
             const logMonth = dateParts[1].padStart(2, '0'); 
             const logYear = dateParts[2];
+            
             if (formattedDateFilter) { 
                 if (l.date !== formattedDateFilter) return; 
             } else { 
                 if (logMonth !== filterBulan || logYear !== filterTahun) return; 
             }
+            
             if (filterStatus !== "SEMUA") {
                 if (filterStatus === "HADIR" && l.type === "DL") return;
                 if (filterStatus === "DL" && l.type !== "DL") return;
                 if (filterStatus === "TERLAMBAT" && (!l.status || !l.status.includes("TERLAMBAT"))) return;
             }
+            
             const key = `${l.date}_${l.name}`;
             if (!grouped[key]) { 
                 grouped[key] = { 
@@ -1643,19 +1719,57 @@
                     timestamp: new Date(logYear, parseInt(logMonth) - 1, parseInt(logDay)).getTime() 
                 }; 
             }
+            
             const fixedTime = formatTimeFix(l.time);
             if (l.type === "MASUK") grouped[key].masuk = fixedTime;
             if (l.type === "PULANG") grouped[key].pulang = fixedTime;
-            if (l.type === "DL") { 
-                grouped[key].masuk = "DL"; 
-                grouped[key].pulang = "DL"; 
-                grouped[key].ket = l.note || "DINAS LUAR"; 
+            
+            if (["DL", "CUTI", "IJIN", "SAKIT"].includes(l.type)) { 
+                grouped[key].masuk = l.type; 
+                grouped[key].pulang = l.type; 
+                grouped[key].ket = l.note || l.type; 
             }
             if (l.status && l.status.includes("TERLAMBAT")) grouped[key].ket = l.status;
         });
+
         const resultArr = Object.values(grouped).sort((a, b) => b.timestamp - a.timestamp);
+
+        resultArr.forEach(r => {
+            if (["DL", "CUTI", "IJIN", "SAKIT"].includes(r.masuk)) {
+                countKhusus++;
+            } else if (r.masuk !== "-") {
+                if (r.ket.includes("TERLAMBAT")) {
+                    countTerlambat++;
+                } else {
+                    countHadir++;
+                }
+            }
+        });
+
+        document.getElementById('stat-hadir').innerText = countHadir;
+        document.getElementById('stat-terlambat').innerText = countTerlambat;
+        document.getElementById('stat-khusus').innerText = countKhusus;
+
         tbody.innerHTML = resultArr.length > 0 ? resultArr.map(r => {
-            return `<tr class="my-row"><td>${r.name}</td><td>${r.date}</td><td>${r.masuk} - ${r.pulang}</td><td>${r.ket}</td></tr>`;
+            let badgeClass = "text-emerald-600 bg-emerald-50 border-emerald-200";
+            if (r.ket.includes("TERLAMBAT")) {
+                badgeClass = "text-rose-600 bg-rose-50 border-rose-200";
+            } else if (["DL", "CUTI", "IJIN", "SAKIT"].includes(r.masuk)) {
+                badgeClass = "text-amber-600 bg-amber-50 border-amber-200";
+            }
+
+            return `
+                <tr class="hover:bg-slate-50/80 transition-colors">
+                    <td class="font-bold text-slate-700">${r.name}</td>
+                    <td class="text-slate-500">${r.date}</td>
+                    <td class="font-mono text-slate-800">${r.masuk} - ${r.pulang}</td>
+                    <td>
+                        <span class="px-2 py-0.5 rounded-md text-[8px] font-black border ${badgeClass}">
+                            ${r.ket === "-" ? "HADIR" : r.ket}
+                        </span>
+                    </td>
+                </tr>
+            `;
         }).join('') : '<tr><td colspan="4" class="text-center py-10 text-slate-400 font-bold uppercase">Data tidak ditemukan</td></tr>';
     }
 
@@ -1729,21 +1843,22 @@
         }
     }
 
+    /* LOGIKA FEEDBACK SINKRONISASI INSTRUKSI DINAMIS */
     function isFaceAligned(detection, videoWidth, videoHeight) {
-        if (!detection) return { aligned: false, status: "MENCARI WAJAH...", scale: 1.0 };
+        if (!detection) return { aligned: false, status: "MENCARI WAJAH...", scale: 1.0, css: "invalid" };
         const { x, y, width, height } = detection.detection.box;
         const centerX = x + width / 2;
         const centerY = y + height / 2;
-        const isCentered = (centerX > videoWidth * 0.25 && centerX < videoWidth * 0.75) && (centerY > videoHeight * 0.25 && centerY < videoHeight * 0.75);
+        const isCentered = (centerX > videoWidth * 0.22 && centerX < videoWidth * 0.78) && (centerY > videoHeight * 0.22 && centerY < videoHeight * 0.78);
         let targetScale = 1.0;
         const faceWidthRatio = width / videoWidth;
-        if (faceWidthRatio < 0.30) targetScale = 2.0; 
-        else if (faceWidthRatio > 0.60) targetScale = 0.8; 
+        if (faceWidthRatio < 0.28) targetScale = 2.0; 
+        else if (faceWidthRatio > 0.58) targetScale = 0.8; 
         else targetScale = 1.2; 
-        if (!isCentered) return { aligned: false, status: "WAJAH DI TENGAH", scale: targetScale };
-        if (width < videoWidth * 0.2) return { aligned: false, status: "TERLALU JAUH", scale: targetScale };
-        if (width > videoWidth * 0.7) return { aligned: false, status: "TERLALU DEKAT", scale: targetScale };
-        return { aligned: true, status: "POSISI SEMPURNA ✅", scale: targetScale };
+        if (!isCentered) return { aligned: false, status: "POSISIKAN WAJAH DI TENGAH LAYAR", scale: targetScale, css: "invalid" };
+        if (width < videoWidth * 0.25) return { aligned: false, status: "TERLALU JAUH! MENDEKAT KE KAMERA", scale: targetScale, css: "invalid" };
+        if (width > videoWidth * 0.65) return { aligned: false, status: "TERLALU DEKAT! MUNDUR SEDIKIT", scale: targetScale, css: "invalid" };
+        return { aligned: true, status: "POSISI SEMPURNA! MOHON JANGAN BERGERAK... 🔒", scale: targetScale, css: "valid" };
     }
 
     function checkShiftTime() {
@@ -1781,10 +1896,12 @@
     function handleAttendanceTrigger() {
         triggerHaptic("confirm");
         const todayStr = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Makassar' }).replace(/\./g, '/');
-        if (state.data.logs.some(l => l.name === state.user && l.date === todayStr && l.type === "DL")) {
-            showAlert("Ditolak", "Anda sudah DINAS LUAR hari ini.");
+        
+        if (state.data.logs.some(l => l.name === state.user && l.date === todayStr && ["DL", "CUTI", "IJIN", "SAKIT"].includes(l.type))) {
+            showAlert("Ditolak", "Anda sudah mengajukan status khusus (DL/CUTI/IJIN/SAKIT) hari ini.");
             return;
         }
+        
         const timeCheck = checkShiftTime();
         if (!timeCheck.allow) { showAlert("Ditolak", timeCheck.msg); return; }
         const bypassGPS = state.data.config.BYPASS_GPS === true || state.data.config.BYPASS_GPS === "true";
@@ -1812,6 +1929,10 @@
         if (mode === 'LOGIN' && val === 'ADMIN') return openAdminLogin();
         if(!state.modelsLoaded) { showLoading(true, "Menyiapkan ..."); await loadModels(); showLoading(false); }
         document.getElementById('face-modal-title').innerText = mode === 'LOGIN' ? "Verifikasi Masuk" : "Verifikasi Absensi";
+        
+        const loginOval = document.getElementById('login-oval');
+        if(loginOval) loginOval.className = "face-oval";
+        
         document.getElementById('modal-face').style.display = 'flex';
         if (!(await getCameraStream('video-preview'))) return closeFaceModal();
         document.getElementById('face-scanner-line').style.display = 'block';
@@ -1833,20 +1954,30 @@
 
         const alignment = isFaceAligned(detection, video.videoWidth, video.videoHeight);
         
+        if(statusEl) {
+            statusEl.innerText = alignment.status;
+            if(alignment.css === "valid") {
+                statusEl.className = "text-[9px] text-center mt-4 font-black text-emerald-600 tracking-wider uppercase bg-emerald-50 py-2 rounded-xl transition-all border border-emerald-200";
+            } else {
+                statusEl.className = "text-[9px] text-center mt-4 font-black text-rose-500 tracking-wider uppercase bg-rose-50 py-2 rounded-xl transition-all border border-rose-100";
+            }
+        }
+
         if (alignment.aligned) {
             state.currentDescriptor = detection.descriptor;
-            if(oval) oval.classList.add('valid');
+            if(oval) { oval.classList.remove('invalid'); oval.classList.add('valid'); }
             
             if (state.authMode === 'ABSENSI') {
                 confirmFaceAuth(); 
                 return; 
             }
-
-            if(statusEl) statusEl.innerText = "WAJAH TERKUNCI ✅";
             if(btn) { btn.disabled = false; btn.innerText = "KENALI SAYA & MASUK"; }
         } else {
-            if(oval) { oval.classList.remove('valid'); if (detection) oval.classList.add('invalid'); }
-            if(statusEl) statusEl.innerText = alignment.status;
+            if(oval) { 
+                oval.classList.remove('valid'); 
+                if (detection) oval.classList.add('invalid'); 
+                else oval.classList.remove('invalid');
+            }
             if(btn) { btn.disabled = true; btn.innerText = "MENCARI WAJAH..."; }
             state.faceDetectionFrame = requestAnimationFrame(detectFaceLoop);
         }
@@ -1909,6 +2040,9 @@
 
     async function openRegister() {
         if(!state.modelsLoaded) { showLoading(true, "Menyiapkan AI..."); await loadModels(); showLoading(false); }
+        const regOval = document.getElementById('reg-oval');
+        if(regOval) regOval.className = "face-oval";
+        
         document.getElementById('modal-register').style.display = 'flex';
         if (await getCameraStream('video-register')) { document.getElementById('reg-scanner-line').style.display = 'block'; detectFaceLoopRegister(); }
     }
@@ -1921,14 +2055,26 @@
         if (!state.stream || !v || v.paused || document.getElementById('modal-register').style.display === 'none') return;
         const d = await faceapi.detectSingleFace(v, new faceapi.TinyFaceDetectorOptions({ inputSize: 128, scoreThreshold: 0.5 })).withFaceLandmarks().withFaceDescriptor();
         const a = isFaceAligned(d, v.videoWidth, v.videoHeight);
-        v.style.transform = `scaleX(-1) scale(${a.scale})`;
+        
+        if(s) {
+            s.innerText = a.status;
+            if(a.css === "valid") {
+                s.className = "text-[9px] text-center mt-4 font-black text-emerald-600 tracking-wider uppercase bg-emerald-50 py-2 rounded-xl transition-all border border-emerald-200";
+            } else {
+                s.className = "text-[9px] text-center mt-4 font-black text-rose-500 tracking-wider uppercase bg-rose-50 py-2 rounded-xl transition-all border border-rose-100";
+            }
+        }
+
         if (a.aligned) {
-            state.currentDescriptor = d.descriptor; if(o) o.classList.add('valid');
-            if(s) { s.innerText = a.status; s.className = "text-[8px] text-center font-bold text-emerald-500 uppercase"; }
+            state.currentDescriptor = d.descriptor; 
+            if(o) { o.classList.remove('invalid'); o.classList.add('valid'); }
             if(b) b.disabled = false;
         } else {
-            if(o) { o.classList.remove('valid'); if (d) o.classList.add('invalid'); }
-            if(s) { s.innerText = a.status; s.className = "text-[8px] text-center font-bold text-red-400 uppercase"; }
+            if(o) { 
+                o.classList.remove('valid'); 
+                if (d) o.classList.add('invalid');
+                else o.classList.remove('invalid');
+            }
             if(b) b.disabled = true; state.faceDetectionFrame = requestAnimationFrame(detectFaceLoopRegister);
         }
     }
@@ -1954,24 +2100,114 @@
     function openDLModal() {
         triggerHaptic("confirm");
         const today = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Makassar' }).replace(/\./g, '/');
-        if (state.data.logs.some(l => l.name === state.user && l.date === today && (l.type === "MASUK" || l.type === "PULANG"))) { showAlert("Opps", "Sudah absen rutin. Fitur DL terkunci."); return; }
-        if (!checkShiftTime().allow) { showAlert("Ditolak", checkShiftTime().msg); return; }
+        
+        if (state.data.logs.some(l => l.name === state.user && l.date === today && (l.type === "MASUK" || l.type === "PULANG"))) { 
+            showAlert("Opps", "Sudah melakukan absen rutin hari ini."); 
+            return; 
+        }
         document.getElementById('modal-dl').style.display = 'flex';
     }
-    
+
     function closeDLModal() { 
         document.getElementById('modal-dl').style.display = 'none'; 
+        
+        if(document.getElementById('dl-status-tipe')) document.getElementById('dl-status-tipe').value = "";
+        if(document.getElementById('dl-keterangan')) document.getElementById('dl-keterangan').value = "";
+
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         const a = document.getElementById(`nav-${state.currentView}`); if(a) a.classList.add('active');
     }
     
     async function processDL() {
-        triggerHaptic("confirm"); const b = document.getElementById('btn-dl-submit'); if (state.isProcessing) return;
-        const k = document.getElementById('dl-keterangan'); const kv = k ? k.value : "-"; if(!kv || kv === "-") return showAlert("Opps", "Isi keterangan!");
+        triggerHaptic("confirm"); 
+        const b = document.getElementById('btn-dl-submit'); 
+        if (state.isProcessing) return;
+
+        const tipeStatus = document.getElementById('dl-status-tipe').value;
+        const keteranganDetail = document.getElementById('dl-keterangan').value.trim(); 
+
+        if (!tipeStatus) {
+            return showAlert("Opps", "Silakan pilih jenis status terlebih dahulu!");
+        }
+        
+        if (!keteranganDetail) {
+            return showAlert("Opps", "Silakan isi keterangan alasan atau detailnya!");
+        }
+
         const today = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Makassar' }).replace(/\./g, '/');
-        if (state.data.logs.some(l => l.name === state.user && l.date === today && l.type === "DL")) return showAlert("Ditolak", "Hari ini sudah DL!");
+        
+        if (state.data.logs.some(l => l.name === state.user && l.date === today && ["DL", "CUTI", "IJIN", "SAKIT"].includes(l.type))) {
+            return showAlert("Ditolak", "Hari ini Anda sudah mengajukan status khusus!");
+        }
+        
         if(b) b.disabled = true;
-        navigator.geolocation.getCurrentPosition((p) => { state.currentLocation = p; closeDLModal(); processAttendance("DL", kv); }, () => { closeDLModal(); processAttendance("DL", kv); });
+        
+        navigator.geolocation.getCurrentPosition(
+            (p) => { 
+                state.currentLocation = p; 
+                closeDLModal(); 
+                processAttendanceCustom(tipeStatus, keteranganDetail); 
+            }, 
+            () => { 
+                closeDLModal(); 
+                processAttendanceCustom(tipeStatus, keteranganDetail); 
+            }
+        );
+    }
+
+    async function processAttendanceCustom(tipeStatus, noteValue) {
+        if (state.isProcessing) return; 
+        state.isProcessing = true; 
+
+        const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Makassar' }).replace('.', ':');
+
+        const payload = { 
+            name: state.user, 
+            type: tipeStatus, 
+            note: noteValue, 
+            accuracy: state.currentLocation ? Math.round(state.currentLocation.coords.accuracy) : 0,
+            coord: state.currentLocation ? `${state.currentLocation.coords.latitude},${state.currentLocation.coords.longitude}` : "No-GPS",
+            clientTime: timeStr 
+        };
+
+        if (!navigator.onLine) {
+            try {
+                const db = await openIndexedDB();
+                const tx = db.transaction('offline_attendance', 'readwrite');
+                const store = tx.objectStore('offline_attendance');
+                
+                await store.add({ 
+                    action: 'saveAttendance', 
+                    payload: [payload], 
+                    timestamp: Date.now() 
+                });
+
+                if ('serviceWorker' in navigator && 'SyncManager' in window) {
+                    const reg = await navigator.serviceWorker.ready;
+                    await reg.sync.register('sync-absensi');
+                }
+
+                showAlert("Mode Offline", `Status ${tipeStatus} disimpan lokal, otomatis sinkron jika online! 📶`);
+                renderDailyLog(); 
+            } catch (e) {
+                showAlert("Error", "Gagal menyimpan data lokal.");
+            } finally {
+                state.isProcessing = false;
+            }
+            return;
+        }
+
+        showLoading(true, `Mencatat Status ${tipeStatus}...`);
+        try { 
+            await callGAS('saveAttendance', [payload]); 
+            showAlert("Berhasil", `Status ${tipeStatus} Berhasil Dicatat ✨`); 
+            await fetchData(); 
+        } catch (e) { 
+            showAlert("Error", "Gagal menyimpan ke server."); 
+        } finally { 
+            state.isProcessing = false; 
+            showLoading(false); 
+        }
     }
 
     async function processAttendance(m, n = "-") {
@@ -2056,17 +2292,19 @@
             c.innerHTML = displayLogs.map(l => {
                 const ft = formatTimeFix(l.time);
                 if(lastDate === today) {
-                    if (l.type === 'MASUK' || l.type === 'DL') { if(m) m.innerText = l.type === 'DL' ? "DL" : ft; if(rm) rm.classList.add('ring-active'); }
-                    if (l.type === 'PULANG' || l.type === 'DL') { if(p) p.innerText = l.type === 'DL' ? "DL" : ft; if(rp) rp.classList.add('ring-active'); }
+                    const statusKhusus = ["DL", "CUTI", "IJIN", "SAKIT"];
+                    if (l.type === 'MASUK' || statusKhusus.includes(l.type)) { 
+                        if(m) m.innerText = statusKhusus.includes(l.type) ? l.type : ft; 
+                        if(rm) rm.classList.add('ring-active'); 
+                    }
+                    if (l.type === 'PULANG' || statusKhusus.includes(l.type)) { 
+                        if(p) p.innerText = statusKhusus.includes(l.type) ? l.type : ft; 
+                        if(rp) rp.classList.add('ring-active'); 
+                    }
                 }
                 return `<div class="log-card"><div class="flex items-center gap-3"><div><p class="text-[10px] font-black uppercase">${l.type}</p><p class="text-[8px] text-slate-400 font-bold">${l.date} | ${ft}</p></div></div><span class="text-[7px] font-black px-2 py-1 rounded-lg bg-white border ${l.status?.includes('TERLAMBAT') ? 'text-red-500' : 'text-emerald-500'}">${l.status || 'OK'}</span></div>`;
             }).join('');
         } else { c.innerHTML = '<div class="text-center py-6 text-[9px] font-bold text-slate-300 uppercase">Belum ada riwayat</div>'; }
-    }
-
-    function downloadExcel() { 
-        const t = document.getElementById('table-to-download');
-        XLSX.writeFile(XLSX.utils.table_to_book(t, { sheet: "Rekap" }), `REKAP_${state.user}_${new Date().getTime()}.xlsx`); 
     }
 
     window.onload = async () => { 
@@ -2095,7 +2333,7 @@
                 if(state.currentView === 'profile') renderShiftInfo(); 
             } 
         }, 1000); 
-    };
+    };    
 
     window.addEventListener('online', () => { const b = document.getElementById('offline-banner'); if(b) b.style.display = 'none'; });
     window.addEventListener('offline', () => { const b = document.getElementById('offline-banner'); if(b) b.style.display = 'block'; });
